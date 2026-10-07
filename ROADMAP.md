@@ -127,9 +127,9 @@ fixed before the behaviours they affect are relied on.
 
 ## Planned features
 
-- **Reranking stage.** Add a cross-encoder reranker behind a `Reranker` protocol
-  and a retrieve-then-rerank path, so the candidate set can be widened cheaply
-  and reordered for precision.
+- **Reranking stage.** The `Reranker` protocol and retrieve-then-rerank path are
+  now implemented with a deterministic offline lexical reranker. A provider-backed
+  cross-encoder remains a future extension for semantic second-stage scoring.
 - **Reciprocal Rank Fusion.** Completed: `HybridRetriever` now supports RRF as
   an alternative to weighted score fusion, removing the need to calibrate raw
   lexical and vector score scales.
