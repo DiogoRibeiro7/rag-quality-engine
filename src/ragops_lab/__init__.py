@@ -1,4 +1,4 @@
-"""RAGOps Lab package."""
+"""RAG Quality Engine package."""
 
 __all__ = ["__version__"]
 
