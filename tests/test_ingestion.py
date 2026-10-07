@@ -71,8 +71,10 @@ def test_chunk_document_avoids_splitting_words_and_preserves_offsets() -> None:
     assert len(chunks) >= 2
     for chunk in chunks:
         assert document.text[chunk.start_offset : chunk.end_offset] == chunk.text
-        assert not chunk.text.startswith(("lpha", "eta "))
-        assert not chunk.text.endswith((" gam", " delt"))
+        if chunk.start_offset > 0:
+            assert document.text[chunk.start_offset - 1].isspace()
+        if chunk.end_offset < len(document.text):
+            assert document.text[chunk.end_offset].isspace()
 
 
 def test_chunk_document_progresses_on_long_unbroken_token() -> None:
