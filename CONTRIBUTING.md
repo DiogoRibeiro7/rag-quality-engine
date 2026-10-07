@@ -1,6 +1,6 @@
 # Contributing
 
-This project is a portfolio-grade RAG and LLMOps lab. Contributions should keep
+RAG Quality Engine is a portfolio-grade RAG quality and reliability project. Contributions should keep
 the codebase deterministic, testable, and runnable without external model
 credentials unless an integration is explicitly optional.
 
