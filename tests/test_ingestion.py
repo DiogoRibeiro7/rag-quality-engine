@@ -57,3 +57,48 @@ def test_chunk_document_rejects_unsupported_strategy() -> None:
 
     with pytest.raises(ValueError, match="Unsupported chunking strategy"):
         chunk_document(document, ChunkingConfig(strategy="tokens"))
+
+
+def test_chunk_document_avoids_splitting_words_and_preserves_offsets() -> None:
+    document = Document(
+        document_id="doc",
+        title="Doc",
+        text="alpha beta gamma delta epsilon zeta eta theta",
+    )
+
+    chunks = chunk_document(document, ChunkingConfig(chunk_size=18, overlap=5))
+
+    assert len(chunks) >= 2
+    for chunk in chunks:
+        assert document.text[chunk.start_offset : chunk.end_offset] == chunk.text
+        if chunk.start_offset > 0:
+            assert document.text[chunk.start_offset - 1].isspace()
+        if chunk.end_offset < len(document.text):
+            assert document.text[chunk.end_offset].isspace()
+
+
+def test_chunk_document_progresses_on_long_unbroken_token() -> None:
+    text = "x" * 80
+    document = Document(document_id="doc", title="Doc", text=text)
+
+    chunks = chunk_document(document, ChunkingConfig(chunk_size=20, overlap=5))
+
+    assert len(chunks) >= 1
+    assert chunks[-1].end_offset == len(text)
+    for chunk in chunks:
+        assert document.text[chunk.start_offset : chunk.end_offset] == chunk.text
+
+
+def test_chunk_document_trims_offsets_with_content() -> None:
+    document = Document(
+        document_id="doc",
+        title="Doc",
+        text="   alpha beta gamma   ",
+    )
+
+    chunks = chunk_document(document, ChunkingConfig(chunk_size=50, overlap=5))
+
+    assert len(chunks) == 1
+    chunk = chunks[0]
+    assert chunk.text == "alpha beta gamma"
+    assert document.text[chunk.start_offset : chunk.end_offset] == chunk.text

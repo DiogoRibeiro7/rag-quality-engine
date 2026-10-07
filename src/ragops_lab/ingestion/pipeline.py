@@ -91,8 +91,50 @@ def discover_documents(
     return documents
 
 
+def _trimmed_span(text: str, start: int, end: int) -> tuple[int, int]:
+    """Return offsets for the non-whitespace content inside a candidate span."""
+    while start < end and text[start].isspace():
+        start += 1
+    while end > start and text[end - 1].isspace():
+        end -= 1
+    return start, end
+
+
+def _snap_end_to_boundary(text: str, start: int, candidate_end: int) -> int:
+    """Prefer a whitespace boundary without preventing progress on long tokens."""
+    if candidate_end >= len(text):
+        return len(text)
+    if text[candidate_end - 1].isspace() or text[candidate_end].isspace():
+        return candidate_end
+
+    boundary = candidate_end
+    while boundary > start and not text[boundary - 1].isspace():
+        boundary -= 1
+    return boundary if boundary > start else candidate_end
+
+
+def _snap_start_to_boundary(text: str, candidate_start: int, previous_start: int) -> int:
+    """Move an overlapping start to the beginning of a word when possible."""
+    if candidate_start <= 0 or candidate_start >= len(text):
+        return candidate_start
+    if text[candidate_start - 1].isspace():
+        return candidate_start
+
+    boundary = candidate_start
+    while boundary > previous_start and not text[boundary - 1].isspace():
+        boundary -= 1
+    if boundary > previous_start:
+        return boundary
+
+    # A token longer than the chunk may span the whole overlap region. There is
+    # no valid word boundary to snap to, so preserve coverage by falling back to
+    # the raw overlap position. The caller guarantees candidate_start > start,
+    # which still guarantees progress.
+    return candidate_start
+
+
 def chunk_document(document: Document, config: ChunkingConfig | None = None) -> list[DocumentChunk]:
-    """Split a document into reusable chunks."""
+    """Split a document into reusable, boundary-aware character chunks."""
     chunking = config or ChunkingConfig()
     if chunking.chunk_size <= 0:
         raise ValueError("chunk_size must be positive.")
@@ -105,29 +147,40 @@ def chunk_document(document: Document, config: ChunkingConfig | None = None) -> 
         )
 
     text = document.text
-    step = chunking.chunk_size - chunking.overlap
     chunks: list[DocumentChunk] = []
     index = 0
-    for start in range(0, len(text), step):
-        end = min(len(text), start + chunking.chunk_size)
-        content = text[start:end].strip()
-        if not content:
-            continue
-        chunks.append(
-            DocumentChunk(
-                chunk_id=f"{document.document_id}:{index}",
-                document_id=document.document_id,
-                text=content,
-                start_offset=start,
-                end_offset=end,
-                token_count=max(1, len(tokenize(content))),
-                source_path=document.source_path,
-                metadata=document.metadata | {"title": document.title, "chunk_index": index},
+    start = 0
+
+    while start < len(text):
+        candidate_end = min(len(text), start + chunking.chunk_size)
+        end = _snap_end_to_boundary(text, start, candidate_end)
+        content_start, content_end = _trimmed_span(text, start, end)
+
+        if content_start < content_end:
+            content = text[content_start:content_end]
+            chunks.append(
+                DocumentChunk(
+                    chunk_id=f"{document.document_id}:{index}",
+                    document_id=document.document_id,
+                    text=content,
+                    start_offset=content_start,
+                    end_offset=content_end,
+                    token_count=max(1, len(tokenize(content))),
+                    source_path=document.source_path,
+                    metadata=document.metadata | {"title": document.title, "chunk_index": index},
+                )
             )
-        )
-        index += 1
+            index += 1
+
         if end >= len(text):
             break
+
+        candidate_start = max(start + 1, end - chunking.overlap)
+        next_start = _snap_start_to_boundary(text, candidate_start, start)
+        if next_start <= start:
+            next_start = end
+        start = next_start
+
     return chunks
 
 
