@@ -1,4 +1,4 @@
-"""FastAPI application for the RAGOps lab."""
+"""FastAPI application for RAG Quality Engine."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ from ragops_lab.tracing import JsonlTraceStore
 
 SETTINGS = RuntimeSettings.from_env()
 
-app = FastAPI(title="RAGOps Lab API", version=__version__)
+app = FastAPI(title="RAG Quality Engine API", version=__version__)
 
 
 def _error_response(status_code: int, code: str, message: str) -> JSONResponse:
