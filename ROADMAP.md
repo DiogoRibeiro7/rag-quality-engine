@@ -18,7 +18,7 @@ The repository includes a working local MVP with:
 - local trace persistence and a minimal dashboard
 - an analytical notebook suite (retrieval tuning, strategy comparison, grounded generation, end-to-end evaluation) built on package code, committed with executed outputs and figures
 - automated linting, type-checking, and test coverage (~90%)
-- CI coverage across Python 3.11 and 3.12
+- CI coverage across Python 3.11, 3.12, 3.13, and 3.14
 - CI-backed deterministic RAG evaluation regression checks with persisted
   artifacts
 - notebook execution checks in CI with `nbval`
@@ -67,6 +67,7 @@ The repository includes a working local MVP with:
   fixtures, and chunking configuration.
 - Added optional p95 latency and token budget gates to benchmark regression
   checks.
+- Added golden-set rebuild tooling based on stable evidence phrases.
 
 ## Known issues and bugs
 
@@ -144,9 +145,9 @@ fixed before the behaviours they affect are relied on.
 - **Cost and latency budgets.** Completed: benchmark cases now record latency
   and token estimates, summaries report p95 values, and optional p95 budgets can
   participate in CI pass/fail alongside quality thresholds.
-- **Golden-set tooling.** A small command to (re)build the golden set by
-  resolving answer phrases to current chunk ids, keeping fixtures in sync with
-  the chunker.
+- **Golden-set tooling.** Completed: answerable fixtures can carry stable
+  `evidence_phrases`, and the `golden-rebuild` command resolves them against
+  the current corpus/chunker to regenerate relevant chunk ids deterministically.
 - **Dataset versioning.** Completed: benchmark artifacts now record corpus and
   fixture SHA-256 hashes, chunking configuration, and a combined reproducibility
   fingerprint so runs can be compared against a stable data identity.
