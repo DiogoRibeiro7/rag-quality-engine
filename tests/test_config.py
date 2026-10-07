@@ -33,12 +33,16 @@ def test_runtime_settings_resolves_retrieval_profile_overrides() -> None:
         top_k=3,
         lexical_weight=0.8,
         vector_weight=0.2,
+        rerank=True,
+        rerank_candidate_multiplier=3,
     )
 
     assert profile.mode == "hybrid"
     assert profile.top_k == 3
     assert profile.lexical_weight == 0.8
     assert profile.vector_weight == 0.2
+    assert profile.rerank is True
+    assert profile.rerank_candidate_multiplier == 3
 
 
 def test_runtime_settings_reports_unknown_retrieval_profiles() -> None:

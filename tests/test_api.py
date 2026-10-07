@@ -147,6 +147,40 @@ def test_api_search_uses_named_retrieval_profile_with_overrides(tmp_path: Path) 
     assert response.json()[0]["chunk"]["chunk_id"] == "apollo:0"
 
 
+
+def test_api_search_can_enable_reranking(tmp_path: Path) -> None:
+    client = TestClient(app)
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    (raw_dir / "first.txt").write_text(
+        "Apollo 11 landed on the Moon in 1969.",
+        encoding="utf-8",
+    )
+    (raw_dir / "second.txt").write_text(
+        "Citation support measures whether answer citations point to retrieved evidence.",
+        encoding="utf-8",
+    )
+    chunks_path = tmp_path / "chunks.jsonl"
+    ingest_directory(raw_dir, chunks_path, ChunkingConfig(chunk_size=120, overlap=10))
+
+    response = client.post(
+        "/search",
+        json={
+            "query": "citation support",
+            "chunks_path": str(chunks_path),
+            "profile": "lexical",
+            "top_k": 1,
+            "rerank": True,
+            "rerank_candidate_multiplier": 3,
+        },
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload[0]["chunk"]["chunk_id"] == "second:0"
+    assert payload[0]["retrieval_method"] == "reranked-lexical"
+
+
 def test_api_uses_configured_default_chunk_path() -> None:
     assert app.version == __version__
     assert SETTINGS.paths.chunk_path.as_posix() == "data/processed/chunks.jsonl"

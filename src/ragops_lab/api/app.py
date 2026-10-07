@@ -22,8 +22,10 @@ from ragops_lab.retrieval import (
     BM25Retriever,
     HybridRetriever,
     LocalVectorIndex,
+    Retriever,
     VectorRetriever,
     build_embedding_client,
+    search_with_profile,
 )
 from ragops_lab.tracing import JsonlTraceStore
 
@@ -127,6 +129,8 @@ class SearchRequest(BaseModel):
     vector_weight: float | None = Field(default=None, ge=0.0, le=1.0)
     fusion_strategy: str | None = Field(default=None)
     rrf_k: int | None = Field(default=None, ge=1)
+    rerank: bool | None = Field(default=None)
+    rerank_candidate_multiplier: int | None = Field(default=None, ge=1)
 
     @field_validator("query")
     @classmethod
@@ -225,6 +229,8 @@ def _search(request: SearchRequest) -> list[RetrievalResult]:
         vector_weight=request.vector_weight,
         fusion_strategy=request.fusion_strategy,
         rrf_k=request.rrf_k,
+        rerank=request.rerank,
+        rerank_candidate_multiplier=request.rerank_candidate_multiplier,
     )
     if profile.top_k > SETTINGS.api_max_top_k:
         raise ValueError(f"top_k must be less than or equal to {SETTINGS.api_max_top_k}.")
@@ -239,20 +245,23 @@ def _search(request: SearchRequest) -> list[RetrievalResult]:
             build_embedding_client(SETTINGS.embeddings),
         )
     )
+    retriever: Retriever
     if profile.mode == "lexical":
-        return lexical.search(request.query, top_k=profile.top_k)
-    if profile.mode == "vector":
-        return vector.search(request.query, top_k=profile.top_k)
-    if profile.mode == "hybrid":
-        return HybridRetriever(
+        retriever = lexical
+    elif profile.mode == "vector":
+        retriever = vector
+    elif profile.mode == "hybrid":
+        retriever = HybridRetriever(
             lexical,
             vector,
             lexical_weight=profile.lexical_weight,
             vector_weight=profile.vector_weight,
             fusion_strategy=profile.fusion_strategy,
             rrf_k=profile.rrf_k,
-        ).search(request.query, top_k=profile.top_k)
-    raise HTTPException(status_code=400, detail=f"Unsupported retrieval mode: {profile.mode}")
+        )
+    else:
+        raise HTTPException(status_code=400, detail=f"Unsupported retrieval mode: {profile.mode}")
+    return search_with_profile(retriever, profile, request.query)
 
 
 @app.post("/ingest")

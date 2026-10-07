@@ -108,6 +108,8 @@ class RetrievalProfile(BaseModel):
     vector_weight: float = Field(default=0.5, ge=0.0, le=1.0)
     fusion_strategy: str = Field(default="weighted")
     rrf_k: int = Field(default=60, ge=1)
+    rerank: bool = Field(default=False)
+    rerank_candidate_multiplier: int = Field(default=4, ge=1)
 
     @field_validator("mode")
     @classmethod
@@ -218,6 +220,8 @@ class RuntimeSettings(BaseModel):
         vector_weight: float | None = None,
         fusion_strategy: str | None = None,
         rrf_k: int | None = None,
+        rerank: bool | None = None,
+        rerank_candidate_multiplier: int | None = None,
     ) -> RetrievalProfile:
         """Resolve a named profile with optional runtime overrides."""
         profile = self.retrieval_profiles.get(name)
@@ -233,6 +237,8 @@ class RuntimeSettings(BaseModel):
                 "vector_weight": vector_weight,
                 "fusion_strategy": fusion_strategy,
                 "rrf_k": rrf_k,
+                "rerank": rerank,
+                "rerank_candidate_multiplier": rerank_candidate_multiplier,
             }.items()
             if value is not None
         }
