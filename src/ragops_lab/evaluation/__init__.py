@@ -1,10 +1,12 @@
 """Evaluation package."""
 
 from .benchmark import (
+    BenchmarkProvenance,
     BenchmarkRun,
     BenchmarkSummary,
     EvaluationCase,
     EvaluationSummary,
+    build_benchmark_provenance,
     load_golden_examples,
     run_benchmark,
     run_evaluation,
@@ -31,8 +33,10 @@ __all__ = [
     "export_evaluation_report_markdown",
     "EvaluationCase",
     "EvaluationSummary",
+    "BenchmarkProvenance",
     "BenchmarkRun",
     "BenchmarkSummary",
+    "build_benchmark_provenance",
     "load_golden_examples",
     "run_evaluation",
     "run_benchmark",
