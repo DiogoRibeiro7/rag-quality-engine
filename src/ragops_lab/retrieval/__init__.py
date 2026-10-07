@@ -4,7 +4,7 @@ from .evaluation import RetrievalEvaluationReport, RetrievalGoldenExample, evalu
 from .hybrid import HybridRetriever
 from .index import LocalVectorIndex
 from .lexical import BM25Retriever
-from .reranking import LexicalOverlapReranker, Reranker, RetrieveThenRerank, Retriever
+from .reranking import LexicalOverlapReranker, Reranker, Retriever, RetrieveThenRerank
 from .tokenizer import tokenize
 from .vector import (
     EmbeddingClient,
