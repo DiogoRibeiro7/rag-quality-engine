@@ -345,6 +345,8 @@ def run_benchmark(
     min_citation_support: float,
     refusal_path: Path | None = Path("data/golden/refusal.json"),
     min_refusal_accuracy: float = 1.0,
+    max_p95_latency_ms: float | None = None,
+    max_p95_token_estimate: int | None = None,
 ) -> tuple[BenchmarkSummary, list[BenchmarkRun]]:
     """Run repeated benchmark passes and aggregate their metrics."""
     if runs < 1:
@@ -359,6 +361,8 @@ def run_benchmark(
         min_faithfulness=min_faithfulness,
         min_citation_support=min_citation_support,
         min_refusal_accuracy=min_refusal_accuracy,
+        max_p95_latency_ms=max_p95_latency_ms,
+        max_p95_token_estimate=max_p95_token_estimate,
     )
 
     benchmark_runs: list[BenchmarkRun] = []
@@ -375,6 +379,8 @@ def run_benchmark(
             min_faithfulness=min_faithfulness,
             min_citation_support=min_citation_support,
             min_refusal_accuracy=min_refusal_accuracy,
+            max_p95_latency_ms=max_p95_latency_ms,
+            max_p95_token_estimate=max_p95_token_estimate,
         )
         benchmark_runs.append(BenchmarkRun(run_id=run_id, summary=summary, cases=cases))
 
@@ -407,6 +413,12 @@ def run_benchmark(
         min_faithfulness=min_faithfulness,
         min_citation_support=min_citation_support,
         min_refusal_accuracy=min_refusal_accuracy,
+        worst_run_p95_latency_ms=max(run.summary.p95_latency_ms for run in benchmark_runs),
+        worst_run_p95_token_estimate=max(
+            run.summary.p95_token_estimate for run in benchmark_runs
+        ),
+        max_p95_latency_ms=max_p95_latency_ms,
+        max_p95_token_estimate=max_p95_token_estimate,
         provenance=benchmark_runs[0].summary.provenance,
         passed=all(run.summary.passed for run in benchmark_runs),
     )
@@ -439,6 +451,8 @@ def write_artifacts(
                 "expected_unanswerable",
                 "recall_at_k",
                 "reciprocal_rank",
+                "latency_ms",
+                "token_estimate",
                 "refusal",
                 "refusal_correct",
                 "faithfulness",
@@ -456,6 +470,8 @@ def write_artifacts(
                     "expected_unanswerable": case.expected_unanswerable,
                     "recall_at_k": f"{case.recall_at_k:.4f}",
                     "reciprocal_rank": f"{case.reciprocal_rank:.4f}",
+                    "latency_ms": f"{case.latency_ms:.4f}",
+                    "token_estimate": case.token_estimate,
                     "refusal": case.answer.refusal,
                     "refusal_correct": case.evaluation.refusal_correct,
                     "faithfulness": f"{case.evaluation.faithfulness:.4f}",
@@ -479,6 +495,10 @@ def write_artifacts(
         f"- Required faithfulness: {summary.min_faithfulness:.2f}",
         f"- Required citation support: {summary.min_citation_support:.2f}",
         f"- Required refusal accuracy: {summary.min_refusal_accuracy:.2f}",
+        f"- p95 latency (ms): {summary.p95_latency_ms:.2f}",
+        f"- p95 token estimate: {summary.p95_token_estimate}",
+        f"- Max p95 latency budget: {summary.max_p95_latency_ms}",
+        f"- Max p95 token budget: {summary.max_p95_token_estimate}",
         f"- Benchmark fingerprint: {summary.provenance.fingerprint}",
         f"- Corpus SHA-256: {summary.provenance.corpus_sha256}",
         (
@@ -528,6 +548,8 @@ def write_benchmark_artifacts(
                 "faithfulness",
                 "citation_support",
                 "refusal_accuracy",
+                "p95_latency_ms",
+                "p95_token_estimate",
                 "passed",
             ],
         )
@@ -542,6 +564,8 @@ def write_benchmark_artifacts(
                     "faithfulness": f"{run.summary.average_faithfulness:.4f}",
                     "citation_support": f"{run.summary.average_citation_support:.4f}",
                     "refusal_accuracy": f"{run.summary.refusal_accuracy:.4f}",
+                    "p95_latency_ms": f"{run.summary.p95_latency_ms:.4f}",
+                    "p95_token_estimate": run.summary.p95_token_estimate,
                     "passed": run.summary.passed,
                 }
             )
@@ -565,6 +589,10 @@ def write_benchmark_artifacts(
         f"- Required faithfulness: {summary.min_faithfulness:.2f}",
         f"- Required citation support: {summary.min_citation_support:.2f}",
         f"- Required refusal accuracy: {summary.min_refusal_accuracy:.2f}",
+        f"- Worst-run p95 latency (ms): {summary.worst_run_p95_latency_ms:.2f}",
+        f"- Worst-run p95 token estimate: {summary.worst_run_p95_token_estimate}",
+        f"- Max p95 latency budget: {summary.max_p95_latency_ms}",
+        f"- Max p95 token budget: {summary.max_p95_token_estimate}",
         f"- Benchmark fingerprint: {summary.provenance.fingerprint}",
         f"- Corpus SHA-256: {summary.provenance.corpus_sha256}",
         (
@@ -591,6 +619,8 @@ def _validate_benchmark_inputs(
     min_citation_support: float,
     refusal_path: Path | None,
     min_refusal_accuracy: float,
+    max_p95_latency_ms: float | None,
+    max_p95_token_estimate: int | None,
 ) -> None:
     if not source_dir.exists():
         raise ValueError(f"Source directory not found: {source_dir}")
@@ -612,3 +642,7 @@ def _validate_benchmark_inputs(
         raise ValueError("min_citation_support must be between 0 and 1.")
     if not 0.0 <= min_refusal_accuracy <= 1.0:
         raise ValueError("min_refusal_accuracy must be between 0 and 1.")
+    if max_p95_latency_ms is not None and max_p95_latency_ms <= 0.0:
+        raise ValueError("max_p95_latency_ms must be positive when provided.")
+    if max_p95_token_estimate is not None and max_p95_token_estimate < 1:
+        raise ValueError("max_p95_token_estimate must be at least 1 when provided.")
