@@ -13,7 +13,13 @@ from .config import RuntimeSettings
 from .evaluation import evaluate_answer, run_benchmark, write_benchmark_artifacts
 from .generation import GenerationService, build_llm_client
 from .ingestion import ChunkingConfig, ingest_directory, load_chunks_jsonl
-from .retrieval import BM25Retriever, HybridRetriever, LocalVectorIndex, build_embedding_client
+from .retrieval import (
+    BM25Retriever,
+    HybridRetriever,
+    LocalVectorIndex,
+    build_embedding_client,
+    search_with_profile,
+)
 
 app = typer.Typer(help="Portfolio project command line interface.")
 console = Console()
@@ -93,6 +99,8 @@ def ask(
     vector_weight: float | None = None,
     fusion_strategy: str | None = None,
     rrf_k: int | None = None,
+    rerank: bool | None = None,
+    rerank_candidate_multiplier: int | None = None,
 ) -> None:
     """Ask a grounded question over ingested chunks."""
     settings = RuntimeSettings.from_env()
@@ -105,6 +113,8 @@ def ask(
             vector_weight=vector_weight,
             fusion_strategy=fusion_strategy,
             rrf_k=rrf_k,
+            rerank=rerank,
+            rerank_candidate_multiplier=rerank_candidate_multiplier,
         )
     except ValueError as exc:
         _fail(str(exc))
@@ -116,28 +126,22 @@ def ask(
         _fail(f"Vector index not found: {vector_index_path}")
     if retrieval.mode == "lexical":
         chunk_list = load_chunks_jsonl(chunks_path)
-        results = BM25Retriever(chunk_list).search(question, top_k=retrieval.top_k)
+        retriever = BM25Retriever(chunk_list)
     elif retrieval.mode == "vector":
-        results = (
-            LocalVectorIndex.load(vector_index_path)
-            .as_retriever()
-            .search(
-                question,
-                top_k=retrieval.top_k,
-            )
-        )
+        retriever = LocalVectorIndex.load(vector_index_path).as_retriever()
     else:
         chunk_list = load_chunks_jsonl(chunks_path)
         lexical = BM25Retriever(chunk_list)
         vector = LocalVectorIndex.load(vector_index_path).as_retriever()
-        results = HybridRetriever(
+        retriever = HybridRetriever(
             lexical,
             vector,
             lexical_weight=retrieval.lexical_weight,
             vector_weight=retrieval.vector_weight,
             fusion_strategy=retrieval.fusion_strategy,
             rrf_k=retrieval.rrf_k,
-        ).search(question, top_k=retrieval.top_k)
+        )
+    results = search_with_profile(retriever, retrieval, question)
     try:
         llm_client, model_name = build_llm_client(settings.llm)
     except (RuntimeError, ValueError) as exc:
