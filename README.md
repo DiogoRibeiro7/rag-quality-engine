@@ -197,6 +197,19 @@ make benchmark
 make notebook-check
 ```
 
+Golden QA fixtures can be rebuilt against the current corpus and chunking configuration when they include stable `evidence_phrases`:
+
+```bash
+poetry run rag-quality-engine golden-rebuild \
+  --source-dir data/sample_documents \
+  --input-path data/golden/qa-anchored.json \
+  --out data/golden/qa.json \
+  --chunk-size 400 \
+  --overlap 60
+```
+
+Each answerable input example should contain a query and one or more exact evidence phrases. The command resolves those anchors to the current chunk IDs and keeps the phrases in the output for future rebuilds. Unanswerable examples are preserved with an empty relevant-chunk list.
+
 `make rag-eval` runs the deterministic RAG evaluation regression gate against
 the bundled golden and refusal sets and writes JSON, CSV, and Markdown reports
 to `artifacts/evaluation`.
