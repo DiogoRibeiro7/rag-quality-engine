@@ -65,6 +65,8 @@ The repository includes a working local MVP with:
   examples.
 - Added benchmark provenance fingerprints covering corpus bytes, evaluation
   fixtures, and chunking configuration.
+- Added optional p95 latency and token budget gates to benchmark regression
+  checks.
 
 ## Known issues and bugs
 
@@ -139,8 +141,9 @@ fixed before the behaviours they affect are relied on.
   config already advertises, with boundary snapping.
 - **Model-as-judge evaluation.** Pluggable LLM judges for relevance and
   faithfulness, with the deterministic lexical judges kept as the offline path.
-- **Cost and latency budgets.** Track token and latency distributions per
-  request and fail evaluation when p95 budgets are breached, not just on quality.
+- **Cost and latency budgets.** Completed: benchmark cases now record latency
+  and token estimates, summaries report p95 values, and optional p95 budgets can
+  participate in CI pass/fail alongside quality thresholds.
 - **Golden-set tooling.** A small command to (re)build the golden set by
   resolving answer phrases to current chunk ids, keeping fixtures in sync with
   the chunker.
