@@ -155,8 +155,11 @@ and `limit` filters for local debugging and demo review.
 
 Retrieval behavior is configured through named profiles rather than hard-coded
 runtime branches. The built-in profiles are `lexical`, `vector`, and `hybrid`;
-requests can still override `top_k`, `mode`, `lexical_weight`, and
-`vector_weight` when needed.
+requests can override `top_k`, `mode`, `lexical_weight`, `vector_weight`,
+`fusion_strategy`, and `rrf_k` when needed. Hybrid retrieval supports the
+backwards-compatible weighted score fusion and Reciprocal Rank Fusion (`rrf`),
+which combines rank positions without requiring lexical and vector scores to be
+on comparable scales.
 
 ## Project structure
 

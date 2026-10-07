@@ -125,6 +125,8 @@ class SearchRequest(BaseModel):
     mode: str | None = Field(default=None)
     lexical_weight: float | None = Field(default=None, ge=0.0, le=1.0)
     vector_weight: float | None = Field(default=None, ge=0.0, le=1.0)
+    fusion_strategy: str | None = Field(default=None)
+    rrf_k: int | None = Field(default=None, ge=1)
 
     @field_validator("query")
     @classmethod
@@ -135,7 +137,7 @@ class SearchRequest(BaseModel):
             max_chars=SETTINGS.api_max_query_chars,
         )
 
-    @field_validator("profile", "chunks_path", "index_path", "mode")
+    @field_validator("profile", "chunks_path", "index_path", "mode", "fusion_strategy")
     @classmethod
     def validate_short_text(cls, value: str | None) -> str | None:
         if value is None:
@@ -221,6 +223,8 @@ def _search(request: SearchRequest) -> list[RetrievalResult]:
         top_k=request.top_k,
         lexical_weight=request.lexical_weight,
         vector_weight=request.vector_weight,
+        fusion_strategy=request.fusion_strategy,
+        rrf_k=request.rrf_k,
     )
     if profile.top_k > SETTINGS.api_max_top_k:
         raise ValueError(f"top_k must be less than or equal to {SETTINGS.api_max_top_k}.")
@@ -245,6 +249,8 @@ def _search(request: SearchRequest) -> list[RetrievalResult]:
             vector,
             lexical_weight=profile.lexical_weight,
             vector_weight=profile.vector_weight,
+            fusion_strategy=profile.fusion_strategy,
+            rrf_k=profile.rrf_k,
         ).search(request.query, top_k=profile.top_k)
     raise HTTPException(status_code=400, detail=f"Unsupported retrieval mode: {profile.mode}")
 

@@ -91,6 +91,8 @@ def ask(
     top_k: int | None = None,
     lexical_weight: float | None = None,
     vector_weight: float | None = None,
+    fusion_strategy: str | None = None,
+    rrf_k: int | None = None,
 ) -> None:
     """Ask a grounded question over ingested chunks."""
     settings = RuntimeSettings.from_env()
@@ -101,6 +103,8 @@ def ask(
             top_k=top_k,
             lexical_weight=lexical_weight,
             vector_weight=vector_weight,
+            fusion_strategy=fusion_strategy,
+            rrf_k=rrf_k,
         )
     except ValueError as exc:
         _fail(str(exc))
@@ -131,6 +135,8 @@ def ask(
             vector,
             lexical_weight=retrieval.lexical_weight,
             vector_weight=retrieval.vector_weight,
+            fusion_strategy=retrieval.fusion_strategy,
+            rrf_k=retrieval.rrf_k,
         ).search(question, top_k=retrieval.top_k)
     try:
         llm_client, model_name = build_llm_client(settings.llm)

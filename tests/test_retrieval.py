@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from ragops_lab.config import EmbeddingSettings
-from ragops_lab.domain import DocumentChunk
+from ragops_lab.domain import DocumentChunk, RetrievalResult
 from ragops_lab.retrieval import (
     BM25Retriever,
     FakeEmbeddingClient,
@@ -101,3 +101,88 @@ def test_retrieval_evaluation_computes_recall_and_mrr() -> None:
 
     assert report.recall_at_k == 1.0
     assert report.mean_reciprocal_rank == 1.0
+
+
+class _StaticRetriever:
+    """Minimal deterministic retriever used to test fusion behavior."""
+
+    def __init__(self, results: list[RetrievalResult]) -> None:
+        self._results = results
+
+    def search(self, query: str, *, top_k: int = 5) -> list[RetrievalResult]:
+        del query
+        return self._results[:top_k]
+
+
+def test_rrf_combines_rankings_without_raw_score_calibration() -> None:
+    first, second = _chunks()
+    lexical_results = [
+        RetrievalResult(
+            chunk=first,
+            score=1000.0,
+            rank=1,
+            retrieval_method="lexical",
+            matched_terms=[],
+        ),
+        RetrievalResult(
+            chunk=second,
+            score=999.0,
+            rank=2,
+            retrieval_method="lexical",
+            matched_terms=[],
+        ),
+    ]
+    vector_results = [
+        RetrievalResult(
+            chunk=second,
+            score=0.0002,
+            rank=1,
+            retrieval_method="vector",
+            matched_terms=[],
+        ),
+        RetrievalResult(
+            chunk=first,
+            score=0.0001,
+            rank=2,
+            retrieval_method="vector",
+            matched_terms=[],
+        ),
+    ]
+
+    retriever = HybridRetriever(
+        _StaticRetriever(lexical_results),  # type: ignore[arg-type]
+        _StaticRetriever(vector_results),  # type: ignore[arg-type]
+        fusion_strategy="rrf",
+        rrf_k=60,
+    )
+    results = retriever.search("query", top_k=2)
+
+    assert {result.chunk.chunk_id for result in results} == {"apollo:0", "metrics:0"}
+    assert results[0].score == results[1].score
+    assert [result.rank for result in results] == [1, 2]
+
+
+def test_hybrid_retriever_rejects_invalid_fusion_strategy() -> None:
+    chunks = _chunks()
+    lexical = BM25Retriever(chunks)
+    vector = VectorRetriever(chunks, FakeEmbeddingClient())
+
+    try:
+        HybridRetriever(lexical, vector, fusion_strategy="unknown")
+    except ValueError as exc:
+        assert "Unsupported fusion strategy" in str(exc)
+    else:
+        raise AssertionError("Expected invalid fusion strategy to fail.")
+
+
+def test_hybrid_retriever_rejects_non_positive_rrf_k() -> None:
+    chunks = _chunks()
+    lexical = BM25Retriever(chunks)
+    vector = VectorRetriever(chunks, FakeEmbeddingClient())
+
+    try:
+        HybridRetriever(lexical, vector, fusion_strategy="rrf", rrf_k=0)
+    except ValueError as exc:
+        assert "rrf_k must be positive" in str(exc)
+    else:
+        raise AssertionError("Expected non-positive rrf_k to fail.")

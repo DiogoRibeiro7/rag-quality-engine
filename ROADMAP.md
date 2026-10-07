@@ -130,8 +130,9 @@ fixed before the behaviours they affect are relied on.
 - **Reranking stage.** Add a cross-encoder reranker behind a `Reranker` protocol
   and a retrieve-then-rerank path, so the candidate set can be widened cheaply
   and reordered for precision.
-- **Reciprocal Rank Fusion.** Offer RRF as an alternative to weighted score
-  fusion in `HybridRetriever`, removing the need to calibrate score scales.
+- **Reciprocal Rank Fusion.** Completed: `HybridRetriever` now supports RRF as
+  an alternative to weighted score fusion, removing the need to calibrate raw
+  lexical and vector score scales.
 - **Token- and sentence-aware chunking.** Implement the chunking strategies the
   config already advertises, with boundary snapping.
 - **Model-as-judge evaluation.** Pluggable LLM judges for relevance and
