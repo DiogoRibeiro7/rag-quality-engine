@@ -13,7 +13,7 @@ from ragops_lab import __version__
 ROOT = Path(__file__).resolve().parents[1]
 ZENODO_CONCEPT_DOI = "10.5281/zenodo.21805398"
 RELEASE_TITLE = (
-    "RAGOps Lab: An Evaluation-First Platform for Retrieval-Augmented Generation Operations"
+    "RAG Quality Engine: An Evaluation-First Platform for Retrieval-Augmented Generation Quality"
 )
 
 
