@@ -433,6 +433,13 @@ def write_artifacts(
         f"- Required faithfulness: {summary.min_faithfulness:.2f}",
         f"- Required citation support: {summary.min_citation_support:.2f}",
         f"- Required refusal accuracy: {summary.min_refusal_accuracy:.2f}",
+        f"- Benchmark fingerprint: {summary.provenance.fingerprint}",
+        f"- Corpus SHA-256: {summary.provenance.corpus_sha256}",
+        (
+            "- Chunking: "
+            f"{summary.provenance.chunking_strategy} "
+            f"(size={summary.provenance.chunk_size}, overlap={summary.provenance.overlap})"
+        ),
         f"- Status: {'passed' if summary.passed else 'failed'}",
     ]
     (output_dir / "summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -512,6 +519,13 @@ def write_benchmark_artifacts(
         f"- Required faithfulness: {summary.min_faithfulness:.2f}",
         f"- Required citation support: {summary.min_citation_support:.2f}",
         f"- Required refusal accuracy: {summary.min_refusal_accuracy:.2f}",
+        f"- Benchmark fingerprint: {summary.provenance.fingerprint}",
+        f"- Corpus SHA-256: {summary.provenance.corpus_sha256}",
+        (
+            "- Chunking: "
+            f"{summary.provenance.chunking_strategy} "
+            f"(size={summary.provenance.chunk_size}, overlap={summary.provenance.overlap})"
+        ),
         f"- Status: {'passed' if summary.passed else 'failed'}",
     ]
     (output_dir / "benchmark-summary.md").write_text(
