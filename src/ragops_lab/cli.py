@@ -177,6 +177,8 @@ def benchmark(
     min_faithfulness: float = 0.80,
     min_citation_support: float = 1.00,
     min_refusal_accuracy: float = 1.00,
+    max_p95_latency_ms: float | None = None,
+    max_p95_token_estimate: int | None = None,
 ) -> None:
     """Run a dataset benchmark over a golden QA set."""
     if not source_dir.exists():
@@ -204,6 +206,8 @@ def benchmark(
             min_faithfulness=min_faithfulness,
             min_citation_support=min_citation_support,
             min_refusal_accuracy=min_refusal_accuracy,
+            max_p95_latency_ms=max_p95_latency_ms,
+            max_p95_token_estimate=max_p95_token_estimate,
         )
     except ValueError as exc:
         _fail(str(exc))
@@ -219,6 +223,8 @@ def benchmark(
     table.add_row("Faithfulness", f"{summary.average_faithfulness:.2f}")
     table.add_row("Citation support", f"{summary.average_citation_support:.2f}")
     table.add_row("Refusal accuracy", f"{summary.average_refusal_accuracy:.2f}")
+    table.add_row("Worst-run p95 latency (ms)", f"{summary.worst_run_p95_latency_ms:.2f}")
+    table.add_row("Worst-run p95 token estimate", str(summary.worst_run_p95_token_estimate))
     table.add_row("Status", "passed" if summary.passed else "failed")
     table.add_row("Artifacts", str(out))
     console.print(table)
