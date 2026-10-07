@@ -126,15 +126,11 @@ def _snap_start_to_boundary(text: str, candidate_start: int, previous_start: int
     if boundary > previous_start:
         return boundary
 
-    # A token longer than the chunk may span the whole overlap region. In that
-    # case move forward to the next boundary rather than returning the same
-    # start and risking an infinite loop.
-    boundary = candidate_start
-    while boundary < len(text) and not text[boundary].isspace():
-        boundary += 1
-    while boundary < len(text) and text[boundary].isspace():
-        boundary += 1
-    return boundary
+    # A token longer than the chunk may span the whole overlap region. There is
+    # no valid word boundary to snap to, so preserve coverage by falling back to
+    # the raw overlap position. The caller guarantees candidate_start > start,
+    # which still guarantees progress.
+    return candidate_start
 
 
 def chunk_document(document: Document, config: ChunkingConfig | None = None) -> list[DocumentChunk]:
