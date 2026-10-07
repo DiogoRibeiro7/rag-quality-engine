@@ -7,7 +7,7 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field, field_validator
 
-RETRIEVAL_MODES = frozenset({"lexical", "vector", "hybrid"})
+RETRIEVAL_MODES = frozenset({"lexical", "vector", "hybrid"})\nRETRIEVAL_FUSION_STRATEGIES = frozenset({"weighted", "rrf"})
 LLM_PROVIDERS = frozenset({"heuristic", "openai-compatible"})
 EMBEDDING_PROVIDERS = frozenset({"fake", "sentence-transformers"})
 
