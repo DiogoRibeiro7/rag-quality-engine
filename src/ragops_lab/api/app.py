@@ -24,6 +24,7 @@ from ragops_lab.retrieval import (
     LocalVectorIndex,
     VectorRetriever,
     build_embedding_client,
+    Retriever,
     search_with_profile,
 )
 from ragops_lab.tracing import JsonlTraceStore
@@ -244,6 +245,7 @@ def _search(request: SearchRequest) -> list[RetrievalResult]:
             build_embedding_client(SETTINGS.embeddings),
         )
     )
+    retriever: Retriever
     if profile.mode == "lexical":
         retriever = lexical
     elif profile.mode == "vector":
