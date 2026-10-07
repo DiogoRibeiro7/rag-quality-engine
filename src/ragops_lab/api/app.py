@@ -22,9 +22,9 @@ from ragops_lab.retrieval import (
     BM25Retriever,
     HybridRetriever,
     LocalVectorIndex,
+    Retriever,
     VectorRetriever,
     build_embedding_client,
-    Retriever,
     search_with_profile,
 )
 from ragops_lab.tracing import JsonlTraceStore
