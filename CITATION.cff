@@ -1,20 +1,20 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it using the metadata from this file."
-title: "RAGOps Lab: An Evaluation-First Platform for Retrieval-Augmented Generation Operations"
+title: "RAG Quality Engine: An Evaluation-First Platform for Retrieval-Augmented Generation Quality"
 version: "0.2.0"
 doi: 10.5281/zenodo.21805398
 date-released: 2026-08-06
 license: MIT
 type: software
-abstract: "RAGOps Lab is an open-source software project for building, testing, and observing retrieval-augmented generation systems. It provides deterministic offline workflows for document ingestion, lexical/vector/hybrid retrieval, grounded answer generation, citation validation, evaluation metrics, trace persistence, a FastAPI service, a command-line interface, and notebook-based analysis."
+abstract: "RAG Quality Engine is an open-source software project for building, testing, and observing retrieval-augmented generation systems. It provides deterministic offline workflows for document ingestion, lexical/vector/hybrid retrieval, grounded answer generation, citation validation, evaluation metrics, trace persistence, a FastAPI service, a command-line interface, and notebook-based analysis."
 authors:
   - family-names: Ribeiro
     given-names: Diogo
     email: dfr@esmad.ipp.pt
     affiliation: "ESMAD - School of Media Arts and Design, Polytechnic of Porto"
     orcid: "https://orcid.org/0009-0001-2022-7072"
-repository-code: "https://github.com/DiogoRibeiro7/ragops-lab"
-url: "https://github.com/DiogoRibeiro7/ragops-lab"
+repository-code: "https://github.com/DiogoRibeiro7/rag-quality-engine"
+url: "https://github.com/DiogoRibeiro7/rag-quality-engine"
 keywords:
   - RAG
   - LLMOps
