@@ -88,7 +88,7 @@ def test_rebuild_golden_set_is_deterministic(tmp_path: Path) -> None:
         input_path=input_path,
         output_path=first_path,
         chunks_path=tmp_path / "first-chunks.jsonl",
-        chunk_size=120,
+        chunk_size=200,
         overlap=20,
     )
     second = rebuild_golden_set(
@@ -96,7 +96,7 @@ def test_rebuild_golden_set_is_deterministic(tmp_path: Path) -> None:
         input_path=input_path,
         output_path=second_path,
         chunks_path=tmp_path / "second-chunks.jsonl",
-        chunk_size=120,
+        chunk_size=200,
         overlap=20,
     )
 
