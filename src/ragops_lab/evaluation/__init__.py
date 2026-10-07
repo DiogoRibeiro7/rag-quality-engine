@@ -13,6 +13,7 @@ from .benchmark import (
     write_artifacts,
     write_benchmark_artifacts,
 )
+from .golden import GoldenSetExample, rebuild_golden_set
 from .service import (
     ClaimSupportJudge,
     LexicalClaimSupportJudge,
@@ -28,6 +29,8 @@ __all__ = [
     "OverlapJudge",
     "ClaimSupportJudge",
     "LexicalClaimSupportJudge",
+    "GoldenSetExample",
+    "rebuild_golden_set",
     "evaluate_answer",
     "export_evaluation_report_csv",
     "export_evaluation_report_markdown",
