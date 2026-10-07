@@ -32,7 +32,10 @@ def test_rebuild_golden_set_resolves_evidence_phrases(tmp_path: Path) -> None:
                 {
                     "query": "What does context precision measure?",
                     "evidence_phrases": [
-                        "Context precision measures the share of retrieved chunks that are relevant."
+                        (
+                            "Context precision measures the share of retrieved chunks "
+                            "that are relevant."
+                        )
                     ],
                 },
                 {
@@ -140,7 +143,10 @@ def test_golden_rebuild_cli_writes_output(tmp_path: Path) -> None:
                 {
                     "query": "What does context precision measure?",
                     "evidence_phrases": [
-                        "Context precision measures the share of retrieved chunks that are relevant."
+                        (
+                            "Context precision measures the share of retrieved chunks "
+                            "that are relevant."
+                        )
                     ],
                 }
             ]
