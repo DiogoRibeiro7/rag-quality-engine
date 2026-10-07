@@ -8,7 +8,9 @@ from ragops_lab.retrieval import (
     BM25Retriever,
     FakeEmbeddingClient,
     HybridRetriever,
+    LexicalOverlapReranker,
     LocalVectorIndex,
+    RetrieveThenRerank,
     RetrievalGoldenExample,
     VectorRetriever,
     build_embedding_client,
@@ -186,3 +188,90 @@ def test_hybrid_retriever_rejects_non_positive_rrf_k() -> None:
         assert "rrf_k must be positive" in str(exc)
     else:
         raise AssertionError("Expected non-positive rrf_k to fail.")
+
+
+def test_lexical_overlap_reranker_can_change_candidate_order() -> None:
+    first, second = _chunks()
+    candidates = [
+        RetrievalResult(
+            chunk=first,
+            score=10.0,
+            rank=1,
+            retrieval_method="hybrid",
+            matched_terms=[],
+        ),
+        RetrievalResult(
+            chunk=second,
+            score=1.0,
+            rank=2,
+            retrieval_method="hybrid",
+            matched_terms=[],
+        ),
+    ]
+
+    results = LexicalOverlapReranker().rerank(
+        "citation support",
+        candidates,
+        top_k=2,
+    )
+
+    assert results[0].chunk.chunk_id == "metrics:0"
+    assert results[0].rank == 1
+    assert results[0].retrieval_method == "reranked-hybrid"
+    assert results[0].matched_terms == ["citation", "support"]
+
+
+class _RecordingRetriever:
+    """Retriever test double that records the requested candidate count."""
+
+    def __init__(self, results: list[RetrievalResult]) -> None:
+        self.results = results
+        self.requested_top_k: int | None = None
+
+    def search(self, query: str, *, top_k: int = 5) -> list[RetrievalResult]:
+        del query
+        self.requested_top_k = top_k
+        return self.results[:top_k]
+
+
+def test_retrieve_then_rerank_widens_candidate_pool() -> None:
+    first, second = _chunks()
+    base_results = [
+        RetrievalResult(
+            chunk=first,
+            score=2.0,
+            rank=1,
+            retrieval_method="hybrid",
+            matched_terms=[],
+        ),
+        RetrievalResult(
+            chunk=second,
+            score=1.0,
+            rank=2,
+            retrieval_method="hybrid",
+            matched_terms=[],
+        ),
+    ]
+    retriever = _RecordingRetriever(base_results)
+    pipeline = RetrieveThenRerank(
+        retriever,
+        LexicalOverlapReranker(),
+        candidate_multiplier=3,
+    )
+
+    results = pipeline.search("citation support", top_k=1)
+
+    assert retriever.requested_top_k == 3
+    assert len(results) == 1
+    assert results[0].chunk.chunk_id == "metrics:0"
+
+
+def test_retrieve_then_rerank_rejects_invalid_candidate_multiplier() -> None:
+    retriever = _RecordingRetriever([])
+
+    try:
+        RetrieveThenRerank(retriever, LexicalOverlapReranker(), candidate_multiplier=0)
+    except ValueError as exc:
+        assert "candidate_multiplier" in str(exc)
+    else:
+        raise AssertionError("Expected invalid candidate multiplier to fail.")
