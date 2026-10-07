@@ -50,9 +50,9 @@ run `make release-check` locally for release-affecting changes.
 Create an annotated tag and publish the GitHub release:
 
 ```bash
-git tag -a vX.Y.Z -m "ragops-lab X.Y.Z"
+git tag -a vX.Y.Z -m "rag-quality-engine X.Y.Z"
 git push origin vX.Y.Z
-gh release create vX.Y.Z --title "RAGOps Lab X.Y.Z" --notes-file RELEASE_NOTES.md
+gh release create vX.Y.Z --title "RAG Quality Engine X.Y.Z" --notes-file RELEASE_NOTES.md
 ```
 
 Use the release notes to summarize user-facing changes, metadata changes,
@@ -65,7 +65,7 @@ validation, and DOI guidance.
 3. Confirm Dependabot open alerts are zero:
 
    ```bash
-   gh api repos/DiogoRibeiro7/ragops-lab/dependabot/alerts --paginate \
+   gh api repos/DiogoRibeiro7/rag-quality-engine/dependabot/alerts --paginate \
      --jq '[.[] | select(.state == "open")] | length'
    ```
 
