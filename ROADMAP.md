@@ -63,6 +63,8 @@ The repository includes a working local MVP with:
   questions.
 - Added richer API usage documentation with concrete request and response
   examples.
+- Added benchmark provenance fingerprints covering corpus bytes, evaluation
+  fixtures, and chunking configuration.
 
 ## Known issues and bugs
 
@@ -142,8 +144,9 @@ fixed before the behaviours they affect are relied on.
 - **Golden-set tooling.** A small command to (re)build the golden set by
   resolving answer phrases to current chunk ids, keeping fixtures in sync with
   the chunker.
-- **Dataset versioning.** Record the chunking config and corpus hash alongside
-  evaluation artifacts so results are reproducible and comparable across runs.
+- **Dataset versioning.** Completed: benchmark artifacts now record corpus and
+  fixture SHA-256 hashes, chunking configuration, and a combined reproducibility
+  fingerprint so runs can be compared against a stable data identity.
 
 ## Near-term priorities
 

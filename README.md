@@ -201,8 +201,7 @@ make notebook-check
 the bundled golden and refusal sets and writes JSON, CSV, and Markdown reports
 to `artifacts/evaluation`.
 
-`make benchmark` runs the same dataset benchmark through the CLI. For repeated
-runs or custom datasets:
+`make benchmark` runs the same dataset benchmark through the CLI. Benchmark JSON and Markdown artifacts include a SHA-256 provenance fingerprint derived from the corpus, golden/refusal fixtures, and chunking configuration, so results are comparable only when their fingerprints match. For repeated runs or custom datasets:
 
 ```bash
 poetry run rag-quality-engine benchmark --runs 3 --source-dir data/sample_documents --golden-path data/golden/qa.json --refusal-path data/golden/refusal.json --out artifacts/evaluation

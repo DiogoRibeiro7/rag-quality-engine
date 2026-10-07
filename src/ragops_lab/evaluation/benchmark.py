@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 from pathlib import Path
 
@@ -37,6 +38,18 @@ class EvaluationCase(BaseModel):
     evaluation: EvaluationResult
 
 
+class BenchmarkProvenance(BaseModel):
+    """Stable identity for benchmark data and chunking inputs."""
+
+    corpus_sha256: str = Field(min_length=64, max_length=64)
+    golden_sha256: str = Field(min_length=64, max_length=64)
+    refusal_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+    chunking_strategy: str = Field(min_length=1)
+    chunk_size: int = Field(ge=1)
+    overlap: int = Field(ge=0)
+    fingerprint: str = Field(min_length=64, max_length=64)
+
+
 class EvaluationSummary(BaseModel):
     """Aggregate regression metrics and threshold status for one run."""
 
@@ -52,6 +65,7 @@ class EvaluationSummary(BaseModel):
     min_faithfulness: float = Field(ge=0.0, le=1.0)
     min_citation_support: float = Field(ge=0.0, le=1.0)
     min_refusal_accuracy: float = Field(ge=0.0, le=1.0)
+    provenance: BenchmarkProvenance
     passed: bool
 
 
@@ -82,7 +96,65 @@ class BenchmarkSummary(BaseModel):
     min_faithfulness: float = Field(ge=0.0, le=1.0)
     min_citation_support: float = Field(ge=0.0, le=1.0)
     min_refusal_accuracy: float = Field(ge=0.0, le=1.0)
+    provenance: BenchmarkProvenance
     passed: bool
+
+
+def _sha256_file(path: Path) -> str:
+    """Hash a file's bytes with SHA-256."""
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _sha256_directory(path: Path) -> str:
+    """Hash relative paths and bytes for all files in a directory tree."""
+    digest = hashlib.sha256()
+    for file_path in sorted(candidate for candidate in path.rglob("*") if candidate.is_file()):
+        relative_path = file_path.relative_to(path).as_posix()
+        digest.update(relative_path.encode("utf-8"))
+        digest.update(b"\0")
+        with file_path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def build_benchmark_provenance(
+    *,
+    source_dir: Path,
+    golden_path: Path,
+    refusal_path: Path | None,
+    chunk_size: int,
+    overlap: int,
+    chunking_strategy: str = "chars",
+) -> BenchmarkProvenance:
+    """Build deterministic provenance for a benchmark configuration."""
+    corpus_sha256 = _sha256_directory(source_dir)
+    golden_sha256 = _sha256_file(golden_path)
+    refusal_sha256 = _sha256_file(refusal_path) if refusal_path is not None else None
+    payload = {
+        "corpus_sha256": corpus_sha256,
+        "golden_sha256": golden_sha256,
+        "refusal_sha256": refusal_sha256,
+        "chunking_strategy": chunking_strategy,
+        "chunk_size": chunk_size,
+        "overlap": overlap,
+    }
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    fingerprint = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    return BenchmarkProvenance(
+        corpus_sha256=corpus_sha256,
+        golden_sha256=golden_sha256,
+        refusal_sha256=refusal_sha256,
+        chunking_strategy=chunking_strategy,
+        chunk_size=chunk_size,
+        overlap=overlap,
+        fingerprint=fingerprint,
+    )
 
 
 def load_golden_examples(path: Path) -> list[BenchmarkGoldenExample]:
@@ -126,10 +198,19 @@ def run_evaluation(
         min_citation_support=min_citation_support,
         min_refusal_accuracy=min_refusal_accuracy,
     )
+    chunking = ChunkingConfig(chunk_size=chunk_size, overlap=overlap)
+    provenance = build_benchmark_provenance(
+        source_dir=source_dir,
+        golden_path=golden_path,
+        refusal_path=refusal_path,
+        chunk_size=chunking.chunk_size,
+        overlap=chunking.overlap,
+        chunking_strategy=chunking.strategy,
+    )
     chunks = ingest_directory(
         source_dir,
         chunks_path,
-        ChunkingConfig(chunk_size=chunk_size, overlap=overlap),
+        chunking,
     )
     retriever = BM25Retriever(chunks)
     generation = GenerationService(HeuristicLLMClient())
@@ -195,6 +276,7 @@ def run_evaluation(
         min_faithfulness=min_faithfulness,
         min_citation_support=min_citation_support,
         min_refusal_accuracy=min_refusal_accuracy,
+        provenance=provenance,
         passed=(
             average_faithfulness >= min_faithfulness
             and average_citation_support >= min_citation_support
@@ -279,6 +361,7 @@ def run_benchmark(
         min_faithfulness=min_faithfulness,
         min_citation_support=min_citation_support,
         min_refusal_accuracy=min_refusal_accuracy,
+        provenance=benchmark_runs[0].summary.provenance,
         passed=all(run.summary.passed for run in benchmark_runs),
     )
     return benchmark_summary, benchmark_runs
@@ -350,6 +433,13 @@ def write_artifacts(
         f"- Required faithfulness: {summary.min_faithfulness:.2f}",
         f"- Required citation support: {summary.min_citation_support:.2f}",
         f"- Required refusal accuracy: {summary.min_refusal_accuracy:.2f}",
+        f"- Benchmark fingerprint: {summary.provenance.fingerprint}",
+        f"- Corpus SHA-256: {summary.provenance.corpus_sha256}",
+        (
+            "- Chunking: "
+            f"{summary.provenance.chunking_strategy} "
+            f"(size={summary.provenance.chunk_size}, overlap={summary.provenance.overlap})"
+        ),
         f"- Status: {'passed' if summary.passed else 'failed'}",
     ]
     (output_dir / "summary.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -429,6 +519,13 @@ def write_benchmark_artifacts(
         f"- Required faithfulness: {summary.min_faithfulness:.2f}",
         f"- Required citation support: {summary.min_citation_support:.2f}",
         f"- Required refusal accuracy: {summary.min_refusal_accuracy:.2f}",
+        f"- Benchmark fingerprint: {summary.provenance.fingerprint}",
+        f"- Corpus SHA-256: {summary.provenance.corpus_sha256}",
+        (
+            "- Chunking: "
+            f"{summary.provenance.chunking_strategy} "
+            f"(size={summary.provenance.chunk_size}, overlap={summary.provenance.overlap})"
+        ),
         f"- Status: {'passed' if summary.passed else 'failed'}",
     ]
     (output_dir / "benchmark-summary.md").write_text(
