@@ -24,6 +24,7 @@ This project is built to demonstrate practical AI engineering, not just prompt w
 
 - Ingests `.txt`, `.md`, `.csv`, and optionally `.pdf` documents into reusable chunks.
 - Supports lexical, vector, and hybrid retrieval through package APIs.
+- Supports retrieve-then-rerank pipelines with a deterministic offline reranker.
 - Generates evidence-grounded answers with citation validation.
 - Evaluates context precision, context recall, claim-level faithfulness, citation support, unsupported claims, and refusal correctness.
 - Stores RAG traces with latency and token estimates.
@@ -147,7 +148,7 @@ Raw documents
   -> CLI / API / dashboard
 ```
 
-The design principle is evaluation-first development: every generated answer should be linked to retrieved evidence, validated for citations, and measurable through explicit metrics. See [`docs/architecture.md`](docs/architecture.md) for more detail.
+The design principle is evaluation-first development: every generated answer should be linked to retrieved evidence, validated for citations, and measurable through explicit metrics. Retrieval can optionally widen the first-stage candidate set and apply a deterministic second-stage reranker before generation. See [`docs/architecture.md`](docs/architecture.md) for more detail.
 
 Trace inspection is available through `GET /traces`, `GET /traces/{id}`, and
 `GET /dashboard`. The list and dashboard views support `q`, `min_faithfulness`,
