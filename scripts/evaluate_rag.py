@@ -47,6 +47,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--min-faithfulness", type=float, default=0.80)
     parser.add_argument("--min-citation-support", type=float, default=1.00)
     parser.add_argument("--min-refusal-accuracy", type=float, default=1.00)
+    parser.add_argument("--max-p95-latency-ms", type=float, default=None)
+    parser.add_argument("--max-p95-token-estimate", type=int, default=None)
     parser.add_argument("--runs", type=int, default=1)
     return parser.parse_args()
 
@@ -65,6 +67,8 @@ def main() -> int:
         min_faithfulness=args.min_faithfulness,
         min_citation_support=args.min_citation_support,
         min_refusal_accuracy=args.min_refusal_accuracy,
+        max_p95_latency_ms=args.max_p95_latency_ms,
+        max_p95_token_estimate=args.max_p95_token_estimate,
     )
     write_benchmark_artifacts(summary, runs, args.output_dir)
     print(summary.model_dump_json(indent=2))

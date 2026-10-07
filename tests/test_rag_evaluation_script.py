@@ -154,3 +154,91 @@ def test_benchmark_artifacts_persist_provenance(tmp_path: Path) -> None:
     assert payload["provenance"]["chunk_size"] == 400
     assert payload["provenance"]["overlap"] == 60
     assert summary.provenance.fingerprint in report
+
+
+def test_benchmark_records_p95_performance_metrics(tmp_path: Path) -> None:
+    summary, runs = evaluate_rag.run_benchmark(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        output_dir=tmp_path / "benchmark",
+        runs=1,
+        top_k=2,
+        chunk_size=400,
+        overlap=60,
+        min_faithfulness=0.80,
+        min_citation_support=1.00,
+    )
+
+    assert summary.worst_run_p95_latency_ms >= 0.0
+    assert summary.worst_run_p95_token_estimate > 0
+    assert runs[0].summary.p95_latency_ms >= 0.0
+    assert runs[0].summary.p95_token_estimate > 0
+    assert all(case.latency_ms >= 0.0 for case in runs[0].cases)
+    assert all(case.token_estimate >= 0 for case in runs[0].cases)
+
+
+def test_token_budget_can_fail_benchmark(tmp_path: Path) -> None:
+    summary, _ = evaluate_rag.run_benchmark(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        output_dir=tmp_path / "benchmark",
+        runs=1,
+        top_k=2,
+        chunk_size=400,
+        overlap=60,
+        min_faithfulness=0.80,
+        min_citation_support=1.00,
+        max_p95_token_estimate=1,
+    )
+
+    assert summary.worst_run_p95_token_estimate > 1
+    assert summary.max_p95_token_estimate == 1
+    assert summary.passed is False
+
+
+def test_benchmark_artifacts_persist_performance_metrics(tmp_path: Path) -> None:
+    output_dir = tmp_path / "benchmark"
+    summary, runs = evaluate_rag.run_benchmark(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        output_dir=output_dir,
+        runs=1,
+        top_k=2,
+        chunk_size=400,
+        overlap=60,
+        min_faithfulness=0.80,
+        min_citation_support=1.00,
+        max_p95_token_estimate=10000,
+    )
+    evaluate_rag.write_benchmark_artifacts(summary, runs, output_dir)
+
+    payload = json.loads(
+        (output_dir / "benchmark-summary.json").read_text(encoding="utf-8")
+    )
+    report = (output_dir / "benchmark-summary.md").read_text(encoding="utf-8")
+
+    assert payload["worst_run_p95_latency_ms"] >= 0.0
+    assert payload["worst_run_p95_token_estimate"] > 0
+    assert payload["max_p95_token_estimate"] == 10000
+    assert "Worst-run p95 latency" in report
+    assert "Worst-run p95 token estimate" in report
+
+
+def test_benchmark_rejects_invalid_performance_budget(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="max_p95_token_estimate"):
+        evaluate_rag.run_benchmark(
+            source_dir=Path("data/sample_documents"),
+            golden_path=Path("data/golden/qa.json"),
+            refusal_path=Path("data/golden/refusal.json"),
+            output_dir=tmp_path / "benchmark",
+            runs=1,
+            top_k=2,
+            chunk_size=400,
+            overlap=60,
+            min_faithfulness=0.80,
+            min_citation_support=1.00,
+            max_p95_token_estimate=0,
+        )
