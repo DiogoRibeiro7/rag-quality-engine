@@ -38,6 +38,18 @@ class EvaluationCase(BaseModel):
     evaluation: EvaluationResult
 
 
+class BenchmarkProvenance(BaseModel):
+    """Stable identity for benchmark data and chunking inputs."""
+
+    corpus_sha256: str = Field(min_length=64, max_length=64)
+    golden_sha256: str = Field(min_length=64, max_length=64)
+    refusal_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+    chunking_strategy: str = Field(min_length=1)
+    chunk_size: int = Field(ge=1)
+    overlap: int = Field(ge=0)
+    fingerprint: str = Field(min_length=64, max_length=64)
+
+
 class EvaluationSummary(BaseModel):
     """Aggregate regression metrics and threshold status for one run."""
 
@@ -55,18 +67,6 @@ class EvaluationSummary(BaseModel):
     min_refusal_accuracy: float = Field(ge=0.0, le=1.0)
     provenance: BenchmarkProvenance
     passed: bool
-
-
-class BenchmarkProvenance(BaseModel):
-    """Stable identity for benchmark data and chunking inputs."""
-
-    corpus_sha256: str = Field(min_length=64, max_length=64)
-    golden_sha256: str = Field(min_length=64, max_length=64)
-    refusal_sha256: str | None = Field(default=None, min_length=64, max_length=64)
-    chunking_strategy: str = Field(min_length=1)
-    chunk_size: int = Field(ge=1)
-    overlap: int = Field(ge=0)
-    fingerprint: str = Field(min_length=64, max_length=64)
 
 
 class BenchmarkRun(BaseModel):
