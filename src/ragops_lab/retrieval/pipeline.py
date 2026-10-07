@@ -5,7 +5,7 @@ from __future__ import annotations
 from ragops_lab.config import RetrievalProfile
 from ragops_lab.domain import RetrievalResult
 
-from .reranking import LexicalOverlapReranker, RetrieveThenRerank, Retriever
+from .reranking import LexicalOverlapReranker, Retriever, RetrieveThenRerank
 
 
 def apply_profile_reranking(
