@@ -338,3 +338,30 @@ def test_api_rejects_oversized_request_body() -> None:
 
     assert response.status_code == 413
     assert "Request body is too large" in response.text
+
+
+def test_api_ingest_supports_sentence_strategy(tmp_path: Path) -> None:
+    client = TestClient(app)
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    (raw_dir / "sentences.txt").write_text(
+        "First sentence. Second sentence. Third sentence.",
+        encoding="utf-8",
+    )
+    chunks_path = tmp_path / "chunks.jsonl"
+
+    response = client.post(
+        "/ingest",
+        json={
+            "input_dir": str(raw_dir),
+            "out_path": str(chunks_path),
+            "chunk_size": 35,
+            "overlap": 10,
+            "strategy": "sentence",
+        },
+    )
+
+    assert response.status_code == 200
+    chunks = load_chunks_jsonl(chunks_path)
+    assert len(chunks) >= 2
+    assert all(chunk.text.endswith((".", "!", "?")) for chunk in chunks)
