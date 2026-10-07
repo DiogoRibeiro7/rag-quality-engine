@@ -1,6 +1,6 @@
 {
-  "title": "RAGOps Lab: An Evaluation-First Platform for Retrieval-Augmented Generation Operations",
-  "description": "RAGOps Lab is an open-source software project for building, testing, and observing retrieval-augmented generation systems. It provides deterministic offline workflows for document ingestion, lexical/vector/hybrid retrieval, grounded answer generation, citation validation, evaluation metrics, trace persistence, a FastAPI service, a command-line interface, and notebook-based analysis.",
+  "title": "RAG Quality Engine: An Evaluation-First Platform for Retrieval-Augmented Generation Quality",
+  "description": "RAG Quality Engine is an open-source software project for building, testing, and observing retrieval-augmented generation systems. It provides deterministic offline workflows for document ingestion, lexical/vector/hybrid retrieval, grounded answer generation, citation validation, evaluation metrics, trace persistence, a FastAPI service, a command-line interface, and notebook-based analysis.",
   "version": "0.2.0",
   "access_right": "open",
   "license": "mit",

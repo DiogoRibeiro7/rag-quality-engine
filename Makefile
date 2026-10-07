@@ -21,7 +21,7 @@ rag-eval:
 	poetry run python scripts/evaluate_rag.py
 
 benchmark:
-	poetry run ragops-lab benchmark
+	poetry run rag-quality-engine benchmark
 
 notebook-check:
 	poetry run pytest --nbval-lax --no-cov notebooks -q

@@ -1,7 +1,7 @@
 [project]
-name = "ragops-lab"
+name = "rag-quality-engine"
 version = "0.2.0"
-description = "RAGOps Lab is an open-source software project for building, testing, and observing retrieval-augmented generation systems."
+description = "RAG Quality Engine is an open-source software project for building, testing, and observing retrieval-augmented generation systems."
 authors = [{ name = "Diogo Ribeiro", email = "hansolo.dj@gmail.com" }]
 readme = "README.md"
 license = "MIT"
@@ -30,7 +30,7 @@ dependencies = [
 ]
 
 [project.scripts]
-ragops-lab = "ragops_lab.cli:app"
+rag-quality-engine = "ragops_lab.cli:app"
 
 [tool.poetry]
 packages = [{ include = "ragops_lab", from = "src" }]

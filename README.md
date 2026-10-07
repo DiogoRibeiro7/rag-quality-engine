@@ -1,12 +1,12 @@
-# ragops-lab
+# RAG Quality Engine
 
-[![CI](https://github.com/DiogoRibeiro7/ragops-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/DiogoRibeiro7/ragops-lab/actions/workflows/ci.yml)
-[![GitHub release](https://img.shields.io/github/v/release/DiogoRibeiro7/ragops-lab)](https://github.com/DiogoRibeiro7/ragops-lab/releases)
+[![CI](https://github.com/DiogoRibeiro7/rag-quality-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/DiogoRibeiro7/rag-quality-engine/actions/workflows/ci.yml)
+[![GitHub release](https://img.shields.io/github/v/release/DiogoRibeiro7/rag-quality-engine)](https://github.com/DiogoRibeiro7/rag-quality-engine/releases)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21805398.svg)](https://doi.org/10.5281/zenodo.21805398)
 
-RAGOps Lab is an open-source software project for building, testing, and observing retrieval-augmented generation systems.
+RAG Quality Engine is an open-source software project for building, testing, and observing retrieval-augmented generation systems.
 
 This project is built to demonstrate practical AI engineering, not just prompt wiring. It focuses on ingestion, retrieval quality, grounded generation, measurable evaluation, and traceability through a reusable Python package, CLI, API, tests, and sample assets.
 
@@ -56,15 +56,15 @@ poetry run python -m ragops_lab.cli ask "Which Apollo mission first landed on th
 You can also use the installed console script:
 
 ```bash
-poetry run ragops-lab ask "Which Apollo mission first landed on the Moon?" --chunks data/processed/chunks.jsonl
+poetry run rag-quality-engine ask "Which Apollo mission first landed on the Moon?" --chunks data/processed/chunks.jsonl
 ```
 
 For vector or hybrid retrieval, build the local deterministic vector index once
 and reload it at query time:
 
 ```bash
-poetry run ragops-lab index --chunks data/processed/chunks.jsonl --out artifacts/index/vector_index.json
-poetry run ragops-lab ask "What does citation support measure?" --profile vector --index-path artifacts/index/vector_index.json
+poetry run rag-quality-engine index --chunks data/processed/chunks.jsonl --out artifacts/index/vector_index.json
+poetry run rag-quality-engine ask "What does citation support measure?" --profile vector --index-path artifacts/index/vector_index.json
 ```
 
 ### 4. Run the API
@@ -204,7 +204,7 @@ to `artifacts/evaluation`.
 runs or custom datasets:
 
 ```bash
-poetry run ragops-lab benchmark --runs 3 --source-dir data/sample_documents --golden-path data/golden/qa.json --refusal-path data/golden/refusal.json --out artifacts/evaluation
+poetry run rag-quality-engine benchmark --runs 3 --source-dir data/sample_documents --golden-path data/golden/qa.json --refusal-path data/golden/refusal.json --out artifacts/evaluation
 ```
 
 `make notebook-check` executes the committed notebooks with `nbval` so notebook

@@ -1,6 +1,6 @@
 # Architecture
 
-`ragops-lab` is organized as a reusable Python package with thin CLI and API
+RAG Quality Engine is organized as a reusable Python package with thin CLI and API
 entrypoints. The project is intentionally offline-first: default retrieval,
 generation, and evaluation paths are deterministic so CI and notebooks can run
 without external credentials.

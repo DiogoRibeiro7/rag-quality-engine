@@ -1,6 +1,6 @@
 # API Usage Guide
 
-RAGOps Lab exposes the local retrieval, answering, evaluation, and trace
+RAG Quality Engine exposes the local retrieval, answering, evaluation, and trace
 inspection workflow through FastAPI. The service uses deterministic offline
 defaults, so the examples below work without external model credentials after
 the sample corpus has been ingested.
@@ -110,13 +110,13 @@ Example response:
 [
   {
     "chunk": {
-      "chunk_id": "ragops-lab-doc-001-chunk-000",
-      "document_id": "ragops-lab-doc-001",
+      "chunk_id": "rag-quality-engine-doc-001-chunk-000",
+      "document_id": "rag-quality-engine-doc-001",
       "text": "Citation support measures whether answer citations point to retrieved evidence.",
       "start_offset": 0,
       "end_offset": 82,
       "token_count": 11,
-      "source_path": "data/sample_documents/ragops_lab.md",
+      "source_path": "data/sample_documents/rag_quality_engine.md",
       "metadata": {}
     },
     "score": 0.91,
@@ -208,10 +208,10 @@ curl -X POST http://localhost:8000/evaluate \
   -d '{
     "question": "What does context recall measure?",
     "answer_text": "Context recall measures how much expected evidence was retrieved.",
-    "citations": ["ragops-lab-doc-001-chunk-002"],
+    "citations": ["rag-quality-engine-doc-001-chunk-002"],
     "chunks_path": "data/processed/chunks.jsonl",
-    "retrieved_chunk_ids": ["ragops-lab-doc-001-chunk-002"],
-    "reference_chunk_ids": ["ragops-lab-doc-001-chunk-002"],
+    "retrieved_chunk_ids": ["rag-quality-engine-doc-001-chunk-002"],
+    "reference_chunk_ids": ["rag-quality-engine-doc-001-chunk-002"],
     "expected_answer": "Context recall measures whether expected evidence appears in retrieval results.",
     "expected_unanswerable": false
   }'
@@ -235,7 +235,7 @@ Example response:
       "claim": "Context recall measures how much expected evidence was retrieved",
       "supported": true,
       "score": 1.0,
-      "evidence_chunk_id": "ragops-lab-doc-001-chunk-002",
+      "evidence_chunk_id": "rag-quality-engine-doc-001-chunk-002",
       "matched_terms": ["context", "recall", "evidence"],
       "missing_terms": []
     }

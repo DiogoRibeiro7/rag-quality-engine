@@ -42,7 +42,7 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Added claim-level faithfulness scoring with cited-evidence matching,
   unsupported-claim details, and stricter numeric mismatch detection.
 - Added a reusable dataset benchmark runner, repeated-run benchmark artifacts,
-  and a `ragops-lab benchmark` CLI command.
+  and a `rag-quality-engine benchmark` CLI command.
 
 ### Changed
 
@@ -93,7 +93,7 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ### Added
 
-- Added the first public release of `ragops-lab`.
+- Added the first public release of `rag-quality-engine`.
 - Added a reusable Python package with typed domain models for documents, chunks,
   retrieval results, generated answers, evaluations, and traces.
 - Added ingestion for text, Markdown, CSV, and optional PDF extraction boundaries.
@@ -118,10 +118,10 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Updated `GitPython` to a patched version to clear Dependabot advisories.
 - Fixed GitHub Actions and branch protection check naming for the Python matrix.
 
-[Unreleased]: https://github.com/DiogoRibeiro7/ragops-lab/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/DiogoRibeiro7/ragops-lab/compare/v0.1.4...v0.2.0
-[0.1.4]: https://github.com/DiogoRibeiro7/ragops-lab/compare/v0.1.3...v0.1.4
-[0.1.3]: https://github.com/DiogoRibeiro7/ragops-lab/compare/v0.1.2...v0.1.3
-[0.1.2]: https://github.com/DiogoRibeiro7/ragops-lab/compare/v0.1.1...v0.1.2
-[0.1.1]: https://github.com/DiogoRibeiro7/ragops-lab/compare/v0.1.0...v0.1.1
-[0.1.0]: https://github.com/DiogoRibeiro7/ragops-lab/releases/tag/v0.1.0
+[Unreleased]: https://github.com/DiogoRibeiro7/rag-quality-engine/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/DiogoRibeiro7/rag-quality-engine/compare/v0.1.4...v0.2.0
+[0.1.4]: https://github.com/DiogoRibeiro7/rag-quality-engine/compare/v0.1.3...v0.1.4
+[0.1.3]: https://github.com/DiogoRibeiro7/rag-quality-engine/compare/v0.1.2...v0.1.3
+[0.1.2]: https://github.com/DiogoRibeiro7/rag-quality-engine/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/DiogoRibeiro7/rag-quality-engine/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/DiogoRibeiro7/rag-quality-engine/releases/tag/v0.1.0

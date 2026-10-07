@@ -1,6 +1,6 @@
 # Roadmap
 
-This roadmap tracks the product and engineering direction for `ragops-lab` as an
+This roadmap tracks the product and engineering direction for `rag-quality-engine` as an
 evaluation-first RAG and LLMOps platform. It is organised as: current state,
 known issues and bugs, milestones, planned features, and near-term priorities.
 
