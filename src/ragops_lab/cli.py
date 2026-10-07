@@ -10,7 +10,12 @@ from rich.console import Console
 from rich.table import Table
 
 from .config import RuntimeSettings
-from .evaluation import evaluate_answer, run_benchmark, write_benchmark_artifacts
+from .evaluation import (
+    evaluate_answer,
+    rebuild_golden_set,
+    run_benchmark,
+    write_benchmark_artifacts,
+)
 from .generation import GenerationService, build_llm_client
 from .ingestion import ChunkingConfig, ingest_directory, load_chunks_jsonl
 from .retrieval import (
@@ -162,6 +167,30 @@ def ask(
     table.add_row("Faithfulness", f"{evaluation.faithfulness:.2f}")
     table.add_row("Citation support", f"{evaluation.citation_support:.2f}")
     console.print(table)
+
+
+@app.command("golden-rebuild")
+def golden_rebuild(
+    source_dir: Path = Path("data/sample_documents"),
+    input_path: Path = Path("data/golden/qa.json"),
+    out: Path = Path("data/golden/qa.json"),
+    chunks_path: Path = Path("artifacts/golden/chunks.jsonl"),
+    chunk_size: int = 400,
+    overlap: int = 60,
+) -> None:
+    """Rebuild golden-set chunk ids from stable evidence phrases."""
+    try:
+        examples = rebuild_golden_set(
+            source_dir=source_dir,
+            input_path=input_path,
+            output_path=out,
+            chunks_path=chunks_path,
+            chunk_size=chunk_size,
+            overlap=overlap,
+        )
+    except ValueError as exc:
+        _fail(str(exc))
+    console.print({"examples_written": len(examples), "out": str(out)})
 
 
 @app.command()
