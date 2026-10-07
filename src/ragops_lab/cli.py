@@ -18,6 +18,7 @@ from .retrieval import (
     HybridRetriever,
     LocalVectorIndex,
     build_embedding_client,
+    Retriever,
     search_with_profile,
 )
 
@@ -124,6 +125,7 @@ def ask(
         _fail(f"Chunks file not found: {chunks_path}")
     if retrieval.mode in {"vector", "hybrid"} and not vector_index_path.exists():
         _fail(f"Vector index not found: {vector_index_path}")
+    retriever: Retriever
     if retrieval.mode == "lexical":
         chunk_list = load_chunks_jsonl(chunks_path)
         retriever = BM25Retriever(chunk_list)
