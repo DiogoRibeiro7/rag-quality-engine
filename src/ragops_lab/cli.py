@@ -17,8 +17,8 @@ from .retrieval import (
     BM25Retriever,
     HybridRetriever,
     LocalVectorIndex,
-    build_embedding_client,
     Retriever,
+    build_embedding_client,
     search_with_profile,
 )
 
