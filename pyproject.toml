@@ -40,12 +40,12 @@ packages = [{ include = "ragops_lab", from = "src" }]
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.1.1"
 pytest-cov = "^7.1.0"
-httpx2 = "^2.4.0"
-mypy = "^2.3.0"
-ruff = "^0.16.1"
-pre-commit = "^4.6.1"
+httpx2 = "^2.13.1"
+mypy = "^2.4.0"
+ruff = "^0.16.10"
+pre-commit = "^4.6.2"
 nbval = "^0.11.0"
-matplotlib = "^3.11.1"
+matplotlib = "^3.11.2"
 seaborn = "^0.13.2"
 
 [build-system]
