@@ -88,3 +88,69 @@ def test_rag_benchmark_rejects_missing_source_dir(tmp_path: Path) -> None:
             min_citation_support=1.00,
             min_refusal_accuracy=1.00,
         )
+
+
+def test_benchmark_provenance_is_deterministic() -> None:
+    first = evaluate_rag.build_benchmark_provenance(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        chunk_size=400,
+        overlap=60,
+    )
+    second = evaluate_rag.build_benchmark_provenance(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        chunk_size=400,
+        overlap=60,
+    )
+
+    assert first == second
+    assert len(first.fingerprint) == 64
+
+
+def test_benchmark_provenance_changes_with_chunking() -> None:
+    baseline = evaluate_rag.build_benchmark_provenance(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        chunk_size=400,
+        overlap=60,
+    )
+    changed = evaluate_rag.build_benchmark_provenance(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        chunk_size=300,
+        overlap=60,
+    )
+
+    assert baseline.fingerprint != changed.fingerprint
+
+
+def test_benchmark_artifacts_persist_provenance(tmp_path: Path) -> None:
+    output_dir = tmp_path / "benchmark"
+    summary, runs = evaluate_rag.run_benchmark(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        output_dir=output_dir,
+        runs=1,
+        top_k=2,
+        chunk_size=400,
+        overlap=60,
+        min_faithfulness=0.80,
+        min_citation_support=1.00,
+    )
+    evaluate_rag.write_benchmark_artifacts(summary, runs, output_dir)
+
+    payload = json.loads(
+        (output_dir / "benchmark-summary.json").read_text(encoding="utf-8")
+    )
+    report = (output_dir / "benchmark-summary.md").read_text(encoding="utf-8")
+
+    assert payload["provenance"]["fingerprint"] == summary.provenance.fingerprint
+    assert payload["provenance"]["chunk_size"] == 400
+    assert payload["provenance"]["overlap"] == 60
+    assert summary.provenance.fingerprint in report
