@@ -170,3 +170,24 @@ def test_golden_rebuild_cli_writes_output(tmp_path: Path) -> None:
     assert result.exit_code == 0
     assert output_path.exists()
     assert "examples_written" in result.output
+
+
+def test_rebuild_golden_set_requires_evidence_phrases_for_answerable_cases(
+    tmp_path: Path,
+) -> None:
+    source_dir = _write_source(tmp_path)
+    input_path = tmp_path / "golden.json"
+    input_path.write_text(
+        json.dumps([{"query": "What does context precision measure?"}]),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="missing evidence_phrases"):
+        rebuild_golden_set(
+            source_dir=source_dir,
+            input_path=input_path,
+            output_path=tmp_path / "out.json",
+            chunks_path=tmp_path / "chunks.jsonl",
+            chunk_size=120,
+            overlap=20,
+        )
