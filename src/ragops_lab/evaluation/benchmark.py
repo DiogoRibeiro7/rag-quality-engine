@@ -53,6 +53,7 @@ class EvaluationSummary(BaseModel):
     min_faithfulness: float = Field(ge=0.0, le=1.0)
     min_citation_support: float = Field(ge=0.0, le=1.0)
     min_refusal_accuracy: float = Field(ge=0.0, le=1.0)
+    provenance: BenchmarkProvenance
     passed: bool
 
 
@@ -95,6 +96,7 @@ class BenchmarkSummary(BaseModel):
     min_faithfulness: float = Field(ge=0.0, le=1.0)
     min_citation_support: float = Field(ge=0.0, le=1.0)
     min_refusal_accuracy: float = Field(ge=0.0, le=1.0)
+    provenance: BenchmarkProvenance
     passed: bool
 
 
@@ -196,10 +198,19 @@ def run_evaluation(
         min_citation_support=min_citation_support,
         min_refusal_accuracy=min_refusal_accuracy,
     )
+    chunking = ChunkingConfig(chunk_size=chunk_size, overlap=overlap)
+    provenance = build_benchmark_provenance(
+        source_dir=source_dir,
+        golden_path=golden_path,
+        refusal_path=refusal_path,
+        chunk_size=chunking.chunk_size,
+        overlap=chunking.overlap,
+        chunking_strategy=chunking.strategy,
+    )
     chunks = ingest_directory(
         source_dir,
         chunks_path,
-        ChunkingConfig(chunk_size=chunk_size, overlap=overlap),
+        chunking,
     )
     retriever = BM25Retriever(chunks)
     generation = GenerationService(HeuristicLLMClient())
@@ -265,6 +276,7 @@ def run_evaluation(
         min_faithfulness=min_faithfulness,
         min_citation_support=min_citation_support,
         min_refusal_accuracy=min_refusal_accuracy,
+        provenance=provenance,
         passed=(
             average_faithfulness >= min_faithfulness
             and average_citation_support >= min_citation_support
@@ -349,6 +361,7 @@ def run_benchmark(
         min_faithfulness=min_faithfulness,
         min_citation_support=min_citation_support,
         min_refusal_accuracy=min_refusal_accuracy,
+        provenance=benchmark_runs[0].summary.provenance,
         passed=all(run.summary.passed for run in benchmark_runs),
     )
     return benchmark_summary, benchmark_runs
