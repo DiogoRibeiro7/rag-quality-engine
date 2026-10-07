@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 from pathlib import Path
 
@@ -55,6 +56,18 @@ class EvaluationSummary(BaseModel):
     passed: bool
 
 
+class BenchmarkProvenance(BaseModel):
+    """Stable identity for benchmark data and chunking inputs."""
+
+    corpus_sha256: str = Field(min_length=64, max_length=64)
+    golden_sha256: str = Field(min_length=64, max_length=64)
+    refusal_sha256: str | None = Field(default=None, min_length=64, max_length=64)
+    chunking_strategy: str = Field(min_length=1)
+    chunk_size: int = Field(ge=1)
+    overlap: int = Field(ge=0)
+    fingerprint: str = Field(min_length=64, max_length=64)
+
+
 class BenchmarkRun(BaseModel):
     """One benchmark repeat with its case-level results."""
 
@@ -83,6 +96,63 @@ class BenchmarkSummary(BaseModel):
     min_citation_support: float = Field(ge=0.0, le=1.0)
     min_refusal_accuracy: float = Field(ge=0.0, le=1.0)
     passed: bool
+
+
+def _sha256_file(path: Path) -> str:
+    """Hash a file's bytes with SHA-256."""
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _sha256_directory(path: Path) -> str:
+    """Hash relative paths and bytes for all files in a directory tree."""
+    digest = hashlib.sha256()
+    for file_path in sorted(candidate for candidate in path.rglob("*") if candidate.is_file()):
+        relative_path = file_path.relative_to(path).as_posix()
+        digest.update(relative_path.encode("utf-8"))
+        digest.update(b"\0")
+        with file_path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def build_benchmark_provenance(
+    *,
+    source_dir: Path,
+    golden_path: Path,
+    refusal_path: Path | None,
+    chunk_size: int,
+    overlap: int,
+    chunking_strategy: str = "chars",
+) -> BenchmarkProvenance:
+    """Build deterministic provenance for a benchmark configuration."""
+    corpus_sha256 = _sha256_directory(source_dir)
+    golden_sha256 = _sha256_file(golden_path)
+    refusal_sha256 = _sha256_file(refusal_path) if refusal_path is not None else None
+    payload = {
+        "corpus_sha256": corpus_sha256,
+        "golden_sha256": golden_sha256,
+        "refusal_sha256": refusal_sha256,
+        "chunking_strategy": chunking_strategy,
+        "chunk_size": chunk_size,
+        "overlap": overlap,
+    }
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    fingerprint = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    return BenchmarkProvenance(
+        corpus_sha256=corpus_sha256,
+        golden_sha256=golden_sha256,
+        refusal_sha256=refusal_sha256,
+        chunking_strategy=chunking_strategy,
+        chunk_size=chunk_size,
+        overlap=overlap,
+        fingerprint=fingerprint,
+    )
 
 
 def load_golden_examples(path: Path) -> list[BenchmarkGoldenExample]:
