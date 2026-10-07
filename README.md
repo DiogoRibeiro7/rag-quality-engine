@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/DiogoRibeiro7/rag-quality-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/DiogoRibeiro7/rag-quality-engine/actions/workflows/ci.yml)
 [![GitHub release](https://img.shields.io/github/v/release/DiogoRibeiro7/rag-quality-engine)](https://github.com/DiogoRibeiro7/rag-quality-engine/releases)
-[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)](pyproject.toml)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21805398.svg)](https://doi.org/10.5281/zenodo.21805398)
 
@@ -15,7 +15,7 @@ This project is built to demonstrate practical AI engineering, not just prompt w
 - Python package under `src/` with typed domain models and service boundaries.
 - CLI and FastAPI entrypoints.
 - Deterministic offline defaults; no model API keys are required for the main demo path.
-- CI runs linting, type checking, and tests on Python 3.11 and 3.12.
+- CI runs linting, type checking, and tests on Python 3.11, 3.12, 3.13, and 3.14.
 - Licensed under MIT.
 - All versions DOI: [`10.5281/zenodo.21805398`](https://doi.org/10.5281/zenodo.21805398).
 - Release history is tracked in [`CHANGELOG.md`](CHANGELOG.md).
@@ -35,7 +35,7 @@ This project is built to demonstrate practical AI engineering, not just prompt w
 
 ### 1. Install
 
-Requires Python 3.11 or 3.12 and Poetry.
+Requires Python 3.11, 3.12, 3.13, or 3.14 and Poetry.
 
 ```bash
 poetry install --with dev
