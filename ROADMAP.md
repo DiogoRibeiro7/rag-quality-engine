@@ -68,16 +68,14 @@ The repository includes a working local MVP with:
 - Added optional p95 latency and token budget gates to benchmark regression
   checks.
 - Added golden-set rebuild tooling based on stable evidence phrases.
+- Added sentence-aware chunking with exact source offsets and safe fallback for
+  oversized sentences.
 
 ## Known issues and bugs
 
 These are confirmed defects with concrete reproduction paths. They should be
 fixed before the behaviours they affect are relied on.
 
-- **Sentence-aware chunking is not implemented yet.** The default character
-  chunker now snaps ordinary boundaries to whitespace and preserves exact source
-  offsets, so it no longer introduces artificial mid-word fragments. A future
-  sentence-aware strategy can improve semantic coherence further.
 - **`OverlapJudge` answer-relevance is a weak proxy.** It scores how many query
   terms reappear in the answer, which yields structurally low values and is not
   safe to use as a quality gate (only as a trend signal). *Fix:* add a
@@ -138,8 +136,9 @@ fixed before the behaviours they affect are relied on.
 - **Reciprocal Rank Fusion.** Completed: `HybridRetriever` now supports RRF as
   an alternative to weighted score fusion, removing the need to calibrate raw
   lexical and vector score scales.
-- **Token- and sentence-aware chunking.** Implement the chunking strategies the
-  config already advertises, with boundary snapping.
+- **Token- and sentence-aware chunking.** Sentence-aware chunking is now
+  implemented with exact offsets and long-sentence fallback. Token-aware
+  chunking remains a future extension.
 - **Model-as-judge evaluation.** Pluggable LLM judges for relevance and
   faithfulness, with the deterministic lexical judges kept as the offline path.
 - **Cost and latency budgets.** Completed: benchmark cases now record latency
