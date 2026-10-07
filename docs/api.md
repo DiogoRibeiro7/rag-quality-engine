@@ -44,7 +44,8 @@ curl -X POST http://localhost:8000/ingest \
     "input_dir": "data/sample_documents",
     "out_path": "data/processed/chunks.jsonl",
     "chunk_size": 500,
-    "overlap": 50
+    "overlap": 50,
+    "strategy": "sentence"
   }'
 ```
 
@@ -58,7 +59,9 @@ Example response:
 ```
 
 Supported input formats are `.txt`, `.md`, `.csv`, and `.pdf` when the optional
-PDF dependency is installed.
+PDF dependency is installed. Chunking strategies are `chars` (default) and
+`sentence`; sentence-aware chunking keeps complete sentence boundaries whenever
+possible while preserving exact source offsets.
 
 ## Build a Vector Index
 
