@@ -106,6 +106,8 @@ class RetrievalProfile(BaseModel):
     top_k: int = Field(default=5, ge=1)
     lexical_weight: float = Field(default=0.5, ge=0.0, le=1.0)
     vector_weight: float = Field(default=0.5, ge=0.0, le=1.0)
+    fusion_strategy: str = Field(default="weighted")
+    rrf_k: int = Field(default=60, ge=1)
 
     @field_validator("mode")
     @classmethod
@@ -114,6 +116,17 @@ class RetrievalProfile(BaseModel):
         if normalized not in RETRIEVAL_MODES:
             supported = ", ".join(sorted(RETRIEVAL_MODES))
             raise ValueError(f"Unsupported retrieval mode: {value}. Supported: {supported}.")
+        return normalized
+
+    @field_validator("fusion_strategy")
+    @classmethod
+    def validate_fusion_strategy(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if normalized not in RETRIEVAL_FUSION_STRATEGIES:
+            supported = ", ".join(sorted(RETRIEVAL_FUSION_STRATEGIES))
+            raise ValueError(
+                f"Unsupported fusion strategy: {value}. Supported: {supported}."
+            )
         return normalized
 
 
@@ -203,6 +216,8 @@ class RuntimeSettings(BaseModel):
         top_k: int | None = None,
         lexical_weight: float | None = None,
         vector_weight: float | None = None,
+        fusion_strategy: str | None = None,
+        rrf_k: int | None = None,
     ) -> RetrievalProfile:
         """Resolve a named profile with optional runtime overrides."""
         profile = self.retrieval_profiles.get(name)
@@ -216,6 +231,8 @@ class RuntimeSettings(BaseModel):
                 "top_k": top_k,
                 "lexical_weight": lexical_weight,
                 "vector_weight": vector_weight,
+                "fusion_strategy": fusion_strategy,
+                "rrf_k": rrf_k,
             }.items()
             if value is not None
         }
