@@ -34,6 +34,9 @@ The repository includes a working local MVP with:
   share the same fitted vocabulary.
 - Added validation for unsupported chunking strategies instead of silently
   ignoring `ChunkingConfig.strategy`.
+- Made character chunking boundary-aware so ordinary words are not split at
+  fixed-width seams, while preserving exact source offsets and safe progress on
+  long unbroken tokens.
 - Added professional repository hygiene: license, contribution guide, security
   policy, pre-commit hooks, Docker build hygiene, and improved CI.
 - Added a deterministic RAG evaluation regression gate with faithfulness and
@@ -66,10 +69,10 @@ The repository includes a working local MVP with:
 These are confirmed defects with concrete reproduction paths. They should be
 fixed before the behaviours they affect are relied on.
 
-- **Chunking splits mid-word and mid-sentence.** Fixed-width character chunking
-  cuts tokens in half at boundaries (e.g. `onstrain the model...`), which
-  pollutes lexical term matches and embeddings near the seams. *Fix:* snap chunk
-  boundaries to word or sentence limits.
+- **Sentence-aware chunking is not implemented yet.** The default character
+  chunker now snaps ordinary boundaries to whitespace and preserves exact source
+  offsets, so it no longer introduces artificial mid-word fragments. A future
+  sentence-aware strategy can improve semantic coherence further.
 - **`OverlapJudge` answer-relevance is a weak proxy.** It scores how many query
   terms reappear in the answer, which yields structurally low values and is not
   safe to use as a quality gate (only as a trend signal). *Fix:* add a
