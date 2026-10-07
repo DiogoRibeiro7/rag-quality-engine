@@ -5,7 +5,9 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import math
 from pathlib import Path
+from time import perf_counter
 
 from pydantic import BaseModel, Field
 
@@ -34,6 +36,8 @@ class EvaluationCase(BaseModel):
     expected_unanswerable: bool = Field(default=False)
     recall_at_k: float = Field(ge=0.0, le=1.0)
     reciprocal_rank: float = Field(ge=0.0, le=1.0)
+    latency_ms: float = Field(ge=0.0)
+    token_estimate: int = Field(ge=0)
     answer: GeneratedAnswer
     evaluation: EvaluationResult
 
@@ -65,6 +69,10 @@ class EvaluationSummary(BaseModel):
     min_faithfulness: float = Field(ge=0.0, le=1.0)
     min_citation_support: float = Field(ge=0.0, le=1.0)
     min_refusal_accuracy: float = Field(ge=0.0, le=1.0)
+    p95_latency_ms: float = Field(ge=0.0)
+    p95_token_estimate: int = Field(ge=0)
+    max_p95_latency_ms: float | None = Field(default=None, gt=0.0)
+    max_p95_token_estimate: int | None = Field(default=None, ge=1)
     provenance: BenchmarkProvenance
     passed: bool
 
@@ -96,6 +104,10 @@ class BenchmarkSummary(BaseModel):
     min_faithfulness: float = Field(ge=0.0, le=1.0)
     min_citation_support: float = Field(ge=0.0, le=1.0)
     min_refusal_accuracy: float = Field(ge=0.0, le=1.0)
+    worst_run_p95_latency_ms: float = Field(ge=0.0)
+    worst_run_p95_token_estimate: int = Field(ge=0)
+    max_p95_latency_ms: float | None = Field(default=None, gt=0.0)
+    max_p95_token_estimate: int | None = Field(default=None, ge=1)
     provenance: BenchmarkProvenance
     passed: bool
 
@@ -173,6 +185,15 @@ def load_golden_examples(path: Path) -> list[BenchmarkGoldenExample]:
     return examples
 
 
+def _percentile_nearest_rank(values: list[float], percentile: float) -> float:
+    """Return a deterministic nearest-rank percentile."""
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    rank = max(1, math.ceil(percentile * len(ordered)))
+    return ordered[rank - 1]
+
+
 def run_evaluation(
     *,
     source_dir: Path,
@@ -185,6 +206,8 @@ def run_evaluation(
     min_citation_support: float,
     refusal_path: Path | None = Path("data/golden/refusal.json"),
     min_refusal_accuracy: float = 1.0,
+    max_p95_latency_ms: float | None = None,
+    max_p95_token_estimate: int | None = None,
 ) -> tuple[EvaluationSummary, list[EvaluationCase]]:
     """Run one deterministic RAG evaluation pass over a golden dataset."""
     _validate_benchmark_inputs(
@@ -197,6 +220,8 @@ def run_evaluation(
         min_faithfulness=min_faithfulness,
         min_citation_support=min_citation_support,
         min_refusal_accuracy=min_refusal_accuracy,
+        max_p95_latency_ms=max_p95_latency_ms,
+        max_p95_token_estimate=max_p95_token_estimate,
     )
     chunking = ChunkingConfig(chunk_size=chunk_size, overlap=overlap)
     provenance = build_benchmark_provenance(
@@ -225,6 +250,7 @@ def run_evaluation(
         if missing_ids:
             raise ValueError(f"Golden example references missing chunk ids: {sorted(missing_ids)}")
 
+        started = perf_counter()
         results = retriever.search(example.query, top_k=top_k)
         retrieved_ids = [result.chunk.chunk_id for result in results]
         relevant_ids = set(example.relevant_chunk_ids)
@@ -240,6 +266,8 @@ def run_evaluation(
             reference_chunk_ids=example.relevant_chunk_ids,
             expected_unanswerable=example.expected_unanswerable,
         )
+        latency_ms = (perf_counter() - started) * 1000.0
+        token_estimate = sum(result.chunk.token_count for result in results)
         cases.append(
             EvaluationCase(
                 query=example.query,
@@ -248,6 +276,8 @@ def run_evaluation(
                 expected_unanswerable=example.expected_unanswerable,
                 recall_at_k=recall_at_k(retrieved_ids, relevant_ids),
                 reciprocal_rank=reciprocal_rank(retrieved_ids, relevant_ids),
+                latency_ms=latency_ms,
+                token_estimate=token_estimate,
                 answer=answer,
                 evaluation=report,
             )
@@ -261,6 +291,16 @@ def run_evaluation(
     average_citation_support = sum(case.evaluation.citation_support for case in cases) / divisor
     refusal_accuracy = (
         sum(1.0 for case in cases if case.evaluation.refusal_correct is True) / divisor
+    )
+    p95_latency_ms = _percentile_nearest_rank([case.latency_ms for case in cases], 0.95)
+    p95_token_estimate = int(
+        _percentile_nearest_rank([float(case.token_estimate) for case in cases], 0.95)
+    )
+    latency_within_budget = (
+        max_p95_latency_ms is None or p95_latency_ms <= max_p95_latency_ms
+    )
+    tokens_within_budget = (
+        max_p95_token_estimate is None or p95_token_estimate <= max_p95_token_estimate
     )
     summary = EvaluationSummary(
         case_count=case_count,
@@ -276,11 +316,17 @@ def run_evaluation(
         min_faithfulness=min_faithfulness,
         min_citation_support=min_citation_support,
         min_refusal_accuracy=min_refusal_accuracy,
+        p95_latency_ms=p95_latency_ms,
+        p95_token_estimate=p95_token_estimate,
+        max_p95_latency_ms=max_p95_latency_ms,
+        max_p95_token_estimate=max_p95_token_estimate,
         provenance=provenance,
         passed=(
             average_faithfulness >= min_faithfulness
             and average_citation_support >= min_citation_support
             and refusal_accuracy >= min_refusal_accuracy
+            and latency_within_budget
+            and tokens_within_budget
         ),
     )
     return summary, cases
