@@ -96,6 +96,7 @@ Then use:
 - `GET /traces`
 - `GET /traces/{id}`
 - `GET /dashboard`
+- `GET /health`
 
 See [`docs/api.md`](docs/api.md) for request bodies, response examples,
 runtime settings, and error formats.
@@ -106,7 +107,10 @@ runtime settings, and error formats.
 docker compose up --build
 ```
 
-The API is served at `http://localhost:8000`.
+The API is served at `http://localhost:8000`. See
+[`docs/deployment.md`](docs/deployment.md) for direct Docker runs, persistent
+storage, health checks, runtime configuration, and public-demo deployment
+guidance.
 
 ## Notebooks
 
