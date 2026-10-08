@@ -34,6 +34,13 @@ SETTINGS = RuntimeSettings.from_env()
 app = FastAPI(title="RAG Quality Engine API", version=__version__)
 
 
+@app.get("/health")
+def health() -> dict[str, str]:
+    """Return a lightweight service health response."""
+    return {"status": "ok", "version": __version__}
+
+
+
 def _error_response(status_code: int, code: str, message: str) -> JSONResponse:
     return JSONResponse(
         status_code=status_code,

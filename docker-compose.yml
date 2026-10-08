@@ -1,9 +1,9 @@
 services:
-  ragops-api:
+  rag-quality-engine:
     build: .
-    command: uvicorn ragops_lab.api.app:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
     volumes:
       - ./data:/app/data
       - ./artifacts:/app/artifacts
+    restart: unless-stopped
