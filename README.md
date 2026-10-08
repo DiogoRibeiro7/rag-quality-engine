@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/project-avatar.png" alt="rag-quality-engine project logo" width="160" height="160">
+</p>
+
 # RAG Quality Engine
 
 [![CI](https://github.com/DiogoRibeiro7/rag-quality-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/DiogoRibeiro7/rag-quality-engine/actions/workflows/ci.yml)

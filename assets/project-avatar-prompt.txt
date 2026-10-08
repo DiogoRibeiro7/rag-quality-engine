@@ -1,0 +1,3 @@
+Tool: built-in image generation
+
+Use case: logo-brand. Create a square project emblem for the GitHub repository rag-quality-engine. Subject: A small stack of ivory document cards passing through a gold magnifying glass with one simple checkmark, representing retrieval and evaluation of grounded answers. Family style: polished editorial illustration with bold softly sculpted forms, ivory and warm gold on a plain midnight-navy background, matching a family of research-project avatars. One balanced centered emblem with generous margins and few elements; clearly recognizable at 192 pixels. No words, letters, numbers, watermark, frame, or decorative clutter.
