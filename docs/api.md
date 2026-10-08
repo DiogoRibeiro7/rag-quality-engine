@@ -31,6 +31,25 @@ Interactive OpenAPI documentation is available at:
 | `GET` | `/traces` | List trace summaries with optional filters. |
 | `GET` | `/traces/{trace_id}` | Fetch one full trace. |
 | `GET` | `/dashboard` | Inspect traces in a browser. |
+| `GET` | `/health` | Return lightweight service health and version metadata. |
+
+## Health Check
+
+`GET /health` confirms that the API process is running without requiring data
+files or external provider credentials.
+
+```bash
+curl http://localhost:8000/health
+```
+
+Example response:
+
+```json
+{
+  "status": "ok",
+  "version": "0.2.0"
+}
+```
 
 ## Ingest Documents
 
