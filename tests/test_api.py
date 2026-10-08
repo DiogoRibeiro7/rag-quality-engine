@@ -46,6 +46,60 @@ def test_api_end_to_end(tmp_path: Path) -> None:
     assert trace_id in dashboard_response.text
 
 
+
+def test_dashboard_renders_quality_kpis_and_attention_rows(tmp_path: Path) -> None:
+    client = TestClient(app)
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    (raw_dir / "apollo.txt").write_text(
+        "Apollo 11 was the first mission to land humans on the Moon.",
+        encoding="utf-8",
+    )
+    chunks_path = tmp_path / "chunks.jsonl"
+    ingest_directory(raw_dir, chunks_path, ChunkingConfig(chunk_size=120, overlap=10))
+    TRACE_STORE.path = tmp_path / "traces.jsonl"
+
+    first = client.post(
+        "/ask",
+        json={
+            "query": "Which mission landed humans on the Moon?",
+            "chunks_path": str(chunks_path),
+        },
+    )
+    assert first.status_code == 200
+
+    trace = TRACE_STORE.list()[0]
+    degraded = trace.model_copy(
+        update={
+            "trace_id": "trace-degraded",
+            "latency_ms": 40.0,
+            "token_estimate": 12,
+            "evaluation": trace.evaluation.model_copy(
+                update={
+                    "faithfulness": 0.5,
+                    "citation_support": 0.5,
+                    "answer_relevance": 0.25,
+                }
+            )
+            if trace.evaluation
+            else None,
+        }
+    )
+    TRACE_STORE.save(degraded)
+
+    response = client.get("/dashboard")
+
+    assert response.status_code == 200
+    assert "RAG Quality Engine Traces" in response.text
+    assert "Avg faithfulness" in response.text
+    assert "Avg citation support" in response.text
+    assert "Avg latency ms" in response.text
+    assert "Total tokens" in response.text
+    assert "Relevance" in response.text
+    assert "Grounded" in response.text
+    assert "Refusal" in response.text
+    assert 'class="attention"' in response.text
+
 def test_api_ingest_and_evaluate_endpoints(tmp_path: Path) -> None:
     client = TestClient(app)
     raw_dir = tmp_path / "raw"
