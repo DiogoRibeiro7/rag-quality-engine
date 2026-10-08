@@ -15,7 +15,6 @@ from ragops_lab.ingestion import (
 )
 
 
-
 def test_api_health_endpoint() -> None:
     response = TestClient(app).get("/health")
 
