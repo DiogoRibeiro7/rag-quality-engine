@@ -42,7 +42,7 @@ def test_api_end_to_end(tmp_path: Path) -> None:
     assert traces_response.status_code == 200
     assert traces_response.json()[0]["trace_id"] == trace_id
     assert dashboard_response.status_code == 200
-    assert "RAGOps Traces" in dashboard_response.text
+    assert "RAG Quality Engine Traces" in dashboard_response.text
     assert trace_id in dashboard_response.text
 
 
