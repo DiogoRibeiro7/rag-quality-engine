@@ -8,7 +8,11 @@ from pytest import MonkeyPatch
 
 from ragops_lab import __version__
 from ragops_lab.api.app import SETTINGS, TRACE_STORE, app
-from ragops_lab.ingestion import ChunkingConfig, ingest_directory, load_chunks_jsonl
+from ragops_lab.ingestion import (
+    ChunkingConfig,
+    ingest_directory,
+    load_chunks_jsonl,
+)
 
 
 
