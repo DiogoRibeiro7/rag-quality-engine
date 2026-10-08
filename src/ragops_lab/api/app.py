@@ -480,8 +480,10 @@ def dashboard(
         "</style></head><body><h1>RAG Quality Engine Traces</h1>"
         "<div class=\"kpis\">"
         f'<div class="kpi">Traces<strong>{len(summaries)}</strong></div>'
-        f'<div class="kpi">Avg faithfulness<strong>{_format_optional_score(average_faithfulness)}</strong></div>'
-        f'<div class="kpi">Avg citation support<strong>{_format_optional_score(average_citation_support)}</strong></div>'
+        '<div class="kpi">Avg faithfulness<strong>'
+        f'{_format_optional_score(average_faithfulness)}</strong></div>'
+        '<div class="kpi">Avg citation support<strong>'
+        f'{_format_optional_score(average_citation_support)}</strong></div>'
         f'<div class="kpi">Avg latency ms<strong>{average_latency_ms:.1f}</strong></div>'
         f'<div class="kpi">Total tokens<strong>{total_tokens}</strong></div>'
         "</div>"
