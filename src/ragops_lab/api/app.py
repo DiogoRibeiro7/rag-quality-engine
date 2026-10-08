@@ -396,32 +396,78 @@ def dashboard(
     limit: int = Query(default=25, ge=1, le=SETTINGS.api_max_top_k * 5),
 ) -> str:
     """Render a trace dashboard with filtering and summary metrics."""
-    summaries = TRACE_STORE.list_summaries(
-        query=q,
-        min_faithfulness=min_faithfulness,
-        limit=limit,
+    summaries = list(
+        TRACE_STORE.list_summaries(
+            query=q,
+            min_faithfulness=min_faithfulness,
+            limit=limit,
+        )
     )
+
+    faithfulness_values = [
+        summary.faithfulness
+        for summary in summaries
+        if summary.faithfulness is not None
+    ]
+    citation_values = [
+        summary.citation_support
+        for summary in summaries
+        if summary.citation_support is not None
+    ]
+    average_faithfulness = (
+        sum(faithfulness_values) / len(faithfulness_values)
+        if faithfulness_values
+        else None
+    )
+    average_citation_support = (
+        sum(citation_values) / len(citation_values)
+        if citation_values
+        else None
+    )
+    average_latency_ms = (
+        sum(summary.latency_ms for summary in summaries) / len(summaries)
+        if summaries
+        else 0.0
+    )
+    total_tokens = sum(summary.token_estimate for summary in summaries)
+
     rows = "\n".join(
-        "<tr>"
-        f'<td><a href="/traces/{escape(summary.trace_id)}">{escape(summary.trace_id)}</a></td>'
-        f"<td>{escape(summary.question)}</td>"
-        f"<td>{escape(summary.model_name)}</td>"
-        f"<td>{summary.retrieved_chunk_count}</td>"
-        f"<td>{_format_optional_score(summary.faithfulness)}</td>"
-        f"<td>{_format_optional_score(summary.citation_support)}</td>"
-        f"<td>{summary.latency_ms:.1f}</td>"
-        f"<td>{summary.token_estimate}</td>"
-        f"<td>{escape(summary.created_at.isoformat())}</td>"
-        "</tr>"
+        "<tr class=\"attention\">"
+        if (
+            (summary.faithfulness is not None and summary.faithfulness < 0.8)
+            or (
+                summary.citation_support is not None
+                and summary.citation_support < 1.0
+            )
+        )
+        else "<tr>"
+        + f'<td><a href="/traces/{escape(summary.trace_id)}">{escape(summary.trace_id)}</a></td>'
+        + f"<td>{escape(summary.question)}</td>"
+        + f"<td>{escape(summary.model_name)}</td>"
+        + f"<td>{summary.retrieved_chunk_count}</td>"
+        + f"<td>{_format_optional_score(summary.faithfulness)}</td>"
+        + f"<td>{_format_optional_score(summary.citation_support)}</td>"
+        + f"<td>{_format_optional_score(summary.answer_relevance)}</td>"
+        + f"<td>{'yes' if summary.grounded else 'no'}</td>"
+        + f"<td>{'yes' if summary.refusal else 'no'}</td>"
+        + f"<td>{summary.latency_ms:.1f}</td>"
+        + f"<td>{summary.token_estimate}</td>"
+        + f"<td>{escape(summary.created_at.isoformat())}</td>"
+        + "</tr>"
         for summary in summaries
     )
     query_value = escape(q or "")
     faithfulness_value = "" if min_faithfulness is None else f"{min_faithfulness:.2f}"
-    empty_row = '<tr><td colspan="9">No traces found.</td></tr>'
+    empty_row = '<tr><td colspan="12">No traces found.</td></tr>'
+
     return (
-        "<html><head><title>RAGOps Traces</title>"
+        "<html><head><title>RAG Quality Engine Traces</title>"
         "<style>"
         "body{font-family:Arial,sans-serif;margin:2rem;color:#1f2933;}"
+        ".kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));"
+        "gap:.75rem;margin:1rem 0 1.25rem;}"
+        ".kpi{border:1px solid #d9e2ec;border-radius:8px;padding:.8rem;background:#f8fafc;}"
+        ".kpi strong{display:block;font-size:1.25rem;margin-top:.2rem;}"
         "form{display:flex;gap:.75rem;align-items:end;margin-bottom:1rem;flex-wrap:wrap;}"
         "label{display:flex;flex-direction:column;font-size:.85rem;font-weight:600;}"
         "input{padding:.45rem;border:1px solid #b8c2cc;border-radius:4px;}"
@@ -430,7 +476,17 @@ def dashboard(
         "table{border-collapse:collapse;width:100%;font-size:.9rem;}"
         "th,td{border-bottom:1px solid #d9e2ec;padding:.55rem;text-align:left;vertical-align:top;}"
         "th{background:#f0f4f8;}"
-        "</style></head><body><h1>RAGOps Traces</h1>"
+        "tr.attention{background:#fff7ed;}"
+        "</style></head><body><h1>RAG Quality Engine Traces</h1>"
+        "<div class=\"kpis\">"
+        f'<div class="kpi">Traces<strong>{len(summaries)}</strong></div>'
+        '<div class="kpi">Avg faithfulness<strong>'
+        f'{_format_optional_score(average_faithfulness)}</strong></div>'
+        '<div class="kpi">Avg citation support<strong>'
+        f'{_format_optional_score(average_citation_support)}</strong></div>'
+        f'<div class="kpi">Avg latency ms<strong>{average_latency_ms:.1f}</strong></div>'
+        f'<div class="kpi">Total tokens<strong>{total_tokens}</strong></div>'
+        "</div>"
         '<form method="get">'
         f'<label>Search<input name="q" value="{query_value}" /></label>'
         "<label>Min faithfulness"
@@ -439,7 +495,8 @@ def dashboard(
         '<button type="submit">Apply</button>'
         "</form>"
         "<table><thead><tr><th>Trace</th><th>Question</th><th>Model</th>"
-        "<th>Chunks</th><th>Faithfulness</th><th>Citation</th><th>Latency ms</th>"
+        "<th>Chunks</th><th>Faithfulness</th><th>Citation</th><th>Relevance</th>"
+        "<th>Grounded</th><th>Refusal</th><th>Latency ms</th>"
         "<th>Tokens</th><th>Created</th></tr></thead><tbody>"
         f"{rows or empty_row}"
         "</tbody></table></body></html>"

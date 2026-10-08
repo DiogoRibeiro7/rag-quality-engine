@@ -297,7 +297,10 @@ http://localhost:8000/dashboard
 ```
 
 The dashboard accepts the same `q`, `min_faithfulness`, and `limit` filters as
-`GET /traces`.
+`GET /traces`. It also shows filtered-set KPIs for trace count, average
+faithfulness, average citation support, average latency, and token usage. Trace
+rows include answer relevance, grounded/refusal state, and visual attention
+highlighting for weak faithfulness or citation support.
 
 ## Error Format
 
