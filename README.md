@@ -22,7 +22,7 @@ This project is built to demonstrate practical AI engineering, not just prompt w
 
 ## What it does
 
-- Ingests `.txt`, `.md`, `.csv`, and optionally `.pdf` documents into reusable chunks.
+- Ingests `.txt`, `.md`, `.csv`, and optionally `.pdf` documents with boundary-aware character or sentence-aware chunking.
 - Supports lexical, vector, and hybrid retrieval through package APIs.
 - Supports retrieve-then-rerank pipelines with a deterministic offline reranker.
 - Generates evidence-grounded answers with citation validation.
@@ -46,6 +46,18 @@ poetry install --with dev
 ```bash
 poetry run python -m ragops_lab.cli ingest data/sample_documents --out data/processed/chunks.jsonl
 ```
+
+For sentence-aware chunking:
+
+```bash
+poetry run rag-quality-engine ingest data/sample_documents \
+  --out data/processed/chunks.jsonl \
+  --strategy sentence \
+  --chunk-size 500 \
+  --overlap 50
+```
+
+The `sentence` strategy groups complete sentences whenever they fit within the configured size and falls back safely for unusually long single sentences while preserving exact source offsets.
 
 ### 3. Ask a question
 

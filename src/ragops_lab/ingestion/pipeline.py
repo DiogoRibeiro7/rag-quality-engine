@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
@@ -29,7 +30,7 @@ class ChunkingConfig:
     strategy: str = "chars"
 
 
-SUPPORTED_CHUNKING_STRATEGIES = frozenset({"chars"})
+SUPPORTED_CHUNKING_STRATEGIES = frozenset({"chars", "sentence"})
 
 
 def slugify(value: str) -> str:
@@ -133,19 +134,39 @@ def _snap_start_to_boundary(text: str, candidate_start: int, previous_start: int
     return candidate_start
 
 
-def chunk_document(document: Document, config: ChunkingConfig | None = None) -> list[DocumentChunk]:
-    """Split a document into reusable, boundary-aware character chunks."""
-    chunking = config or ChunkingConfig()
-    if chunking.chunk_size <= 0:
-        raise ValueError("chunk_size must be positive.")
-    if chunking.overlap < 0 or chunking.overlap >= chunking.chunk_size:
-        raise ValueError("overlap must be non-negative and smaller than chunk_size.")
-    if chunking.strategy not in SUPPORTED_CHUNKING_STRATEGIES:
-        supported = ", ".join(sorted(SUPPORTED_CHUNKING_STRATEGIES))
-        raise ValueError(
-            f"Unsupported chunking strategy: {chunking.strategy}. Supported: {supported}."
-        )
+def _sentence_spans(text: str) -> list[tuple[int, int]]:
+    """Return trimmed sentence spans while preserving source offsets."""
+    spans: list[tuple[int, int]] = []
+    for match in re.finditer(r".+?(?:[.!?]+(?=\s|$)|$)", text, flags=re.DOTALL):
+        start, end = _trimmed_span(text, match.start(), match.end())
+        if start < end:
+            spans.append((start, end))
+    return spans
 
+
+def _build_chunk(
+    document: Document,
+    *,
+    index: int,
+    start: int,
+    end: int,
+) -> DocumentChunk:
+    """Create one chunk while preserving exact source offsets."""
+    content = document.text[start:end]
+    return DocumentChunk(
+        chunk_id=f"{document.document_id}:{index}",
+        document_id=document.document_id,
+        text=content,
+        start_offset=start,
+        end_offset=end,
+        token_count=max(1, len(tokenize(content))),
+        source_path=document.source_path,
+        metadata=document.metadata | {"title": document.title, "chunk_index": index},
+    )
+
+
+def _chunk_document_chars(document: Document, chunking: ChunkingConfig) -> list[DocumentChunk]:
+    """Split a document into boundary-aware character chunks."""
     text = document.text
     chunks: list[DocumentChunk] = []
     index = 0
@@ -157,17 +178,12 @@ def chunk_document(document: Document, config: ChunkingConfig | None = None) -> 
         content_start, content_end = _trimmed_span(text, start, end)
 
         if content_start < content_end:
-            content = text[content_start:content_end]
             chunks.append(
-                DocumentChunk(
-                    chunk_id=f"{document.document_id}:{index}",
-                    document_id=document.document_id,
-                    text=content,
-                    start_offset=content_start,
-                    end_offset=content_end,
-                    token_count=max(1, len(tokenize(content))),
-                    source_path=document.source_path,
-                    metadata=document.metadata | {"title": document.title, "chunk_index": index},
+                _build_chunk(
+                    document,
+                    index=index,
+                    start=content_start,
+                    end=content_end,
                 )
             )
             index += 1
@@ -182,6 +198,98 @@ def chunk_document(document: Document, config: ChunkingConfig | None = None) -> 
         start = next_start
 
     return chunks
+
+
+def _chunk_document_sentences(
+    document: Document,
+    chunking: ChunkingConfig,
+) -> list[DocumentChunk]:
+    """Group complete sentences into chunks up to the configured size."""
+    text = document.text
+    spans = _sentence_spans(text)
+    if not spans:
+        return []
+
+    chunks: list[DocumentChunk] = []
+    index = 0
+    sentence_index = 0
+
+    while sentence_index < len(spans):
+        start, first_end = spans[sentence_index]
+
+        if first_end - start > chunking.chunk_size:
+            candidate_end = min(len(text), start + chunking.chunk_size)
+            end = _snap_end_to_boundary(text, start, candidate_end)
+            content_start, content_end = _trimmed_span(text, start, end)
+            if content_start < content_end:
+                chunks.append(
+                    _build_chunk(
+                        document,
+                        index=index,
+                        start=content_start,
+                        end=content_end,
+                    )
+                )
+                index += 1
+            if end >= first_end:
+                sentence_index += 1
+            else:
+                spans[sentence_index] = (end, first_end)
+            continue
+
+        end = first_end
+        next_index = sentence_index + 1
+        while next_index < len(spans):
+            _, candidate_end = spans[next_index]
+            if candidate_end - start > chunking.chunk_size:
+                break
+            end = candidate_end
+            next_index += 1
+
+        chunks.append(
+            _build_chunk(
+                document,
+                index=index,
+                start=start,
+                end=end,
+            )
+        )
+        index += 1
+
+        if next_index >= len(spans):
+            break
+
+        if chunking.overlap == 0:
+            sentence_index = next_index
+            continue
+
+        overlap_start = max(start + 1, end - chunking.overlap)
+        overlapping_sentence_index = next_index
+        for candidate_index in range(sentence_index, next_index):
+            sentence_start, _ = spans[candidate_index]
+            if sentence_start >= overlap_start:
+                overlapping_sentence_index = candidate_index
+                break
+        sentence_index = max(sentence_index + 1, overlapping_sentence_index)
+
+    return chunks
+
+
+def chunk_document(document: Document, config: ChunkingConfig | None = None) -> list[DocumentChunk]:
+    """Split a document using the configured chunking strategy."""
+    chunking = config or ChunkingConfig()
+    if chunking.chunk_size <= 0:
+        raise ValueError("chunk_size must be positive.")
+    if chunking.overlap < 0 or chunking.overlap >= chunking.chunk_size:
+        raise ValueError("overlap must be non-negative and smaller than chunk_size.")
+    if chunking.strategy not in SUPPORTED_CHUNKING_STRATEGIES:
+        supported = ", ".join(sorted(SUPPORTED_CHUNKING_STRATEGIES))
+        raise ValueError(
+            f"Unsupported chunking strategy: {chunking.strategy}. Supported: {supported}."
+        )
+    if chunking.strategy == "sentence":
+        return _chunk_document_sentences(document, chunking)
+    return _chunk_document_chars(document, chunking)
 
 
 def ingest_directory(

@@ -102,3 +102,85 @@ def test_chunk_document_trims_offsets_with_content() -> None:
     chunk = chunks[0]
     assert chunk.text == "alpha beta gamma"
     assert document.text[chunk.start_offset : chunk.end_offset] == chunk.text
+
+
+def test_sentence_chunking_preserves_sentence_boundaries_and_offsets() -> None:
+    text = (
+        "Alpha is the first sentence. "
+        "Beta is the second sentence. "
+        "Gamma is the third sentence."
+    )
+    document = Document(document_id="doc", title="Doc", text=text)
+
+    chunks = chunk_document(
+        document,
+        ChunkingConfig(chunk_size=58, overlap=0, strategy="sentence"),
+    )
+
+    assert [chunk.text for chunk in chunks] == [
+        "Alpha is the first sentence. Beta is the second sentence.",
+        "Gamma is the third sentence.",
+    ]
+    for chunk in chunks:
+        assert document.text[chunk.start_offset : chunk.end_offset] == chunk.text
+        assert chunk.text.endswith((".", "!", "?"))
+
+
+def test_sentence_chunking_can_overlap_whole_sentences() -> None:
+    text = "One short sentence. Two short sentence. Three short sentence."
+    document = Document(document_id="doc", title="Doc", text=text)
+
+    chunks = chunk_document(
+        document,
+        ChunkingConfig(chunk_size=41, overlap=22, strategy="sentence"),
+    )
+
+    assert chunks[0].text == "One short sentence. Two short sentence."
+    assert chunks[1].text == "Two short sentence. Three short sentence."
+    assert chunks[0].end_offset > chunks[1].start_offset
+
+
+def test_sentence_chunking_falls_back_for_long_sentence() -> None:
+    text = "This sentence contains averyveryveryveryverylongtoken and keeps going."
+    document = Document(document_id="doc", title="Doc", text=text)
+
+    chunks = chunk_document(
+        document,
+        ChunkingConfig(chunk_size=24, overlap=5, strategy="sentence"),
+    )
+
+    assert len(chunks) >= 2
+    assert chunks[-1].end_offset == len(text)
+    for chunk in chunks:
+        assert document.text[chunk.start_offset : chunk.end_offset] == chunk.text
+
+
+def test_cli_ingest_supports_sentence_strategy(tmp_path: Path) -> None:
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    (raw_dir / "doc.txt").write_text(
+        "First sentence. Second sentence. Third sentence.",
+        encoding="utf-8",
+    )
+    output_path = tmp_path / "chunks.jsonl"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "ingest",
+            str(raw_dir),
+            "--out",
+            str(output_path),
+            "--strategy",
+            "sentence",
+            "--chunk-size",
+            "35",
+            "--overlap",
+            "10",
+        ],
+    )
+
+    assert result.exit_code == 0
+    chunks = load_chunks_jsonl(output_path)
+    assert len(chunks) >= 2
+    assert all(chunk.text.endswith((".", "!", "?")) for chunk in chunks)

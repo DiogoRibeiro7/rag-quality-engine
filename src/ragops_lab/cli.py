@@ -49,6 +49,7 @@ def ingest(
     out: Path | None = None,
     chunk_size: int = 500,
     overlap: int = 50,
+    strategy: str = "chars",
 ) -> None:
     """Ingest documents into chunk JSONL."""
     settings = RuntimeSettings.from_env()
@@ -61,7 +62,11 @@ def ingest(
         chunks = ingest_directory(
             input_dir,
             output_path,
-            config=ChunkingConfig(chunk_size=chunk_size, overlap=overlap),
+            config=ChunkingConfig(
+                chunk_size=chunk_size,
+                overlap=overlap,
+                strategy=strategy,
+            ),
         )
     except ValueError as exc:
         _fail(str(exc))

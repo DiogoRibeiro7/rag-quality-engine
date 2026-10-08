@@ -97,8 +97,9 @@ class IngestRequest(BaseModel):
     out_path: str = Field(default_factory=lambda: str(SETTINGS.paths.chunk_path))
     chunk_size: int = Field(default=500, gt=0)
     overlap: int = Field(default=50, ge=0)
+    strategy: str = Field(default="chars")
 
-    @field_validator("input_dir", "out_path")
+    @field_validator("input_dir", "out_path", "strategy")
     @classmethod
     def validate_path_text(cls, value: str) -> str:
         return _validate_text_limit(value, field_name="path")
@@ -275,7 +276,11 @@ def ingest(request: IngestRequest) -> dict[str, int | str]:
     chunks = ingest_directory(
         input_dir,
         Path(request.out_path),
-        config=ChunkingConfig(chunk_size=request.chunk_size, overlap=request.overlap),
+        config=ChunkingConfig(
+            chunk_size=request.chunk_size,
+            overlap=request.overlap,
+            strategy=request.strategy,
+        ),
     )
     return {"chunks_written": len(chunks), "out_path": request.out_path}
 
