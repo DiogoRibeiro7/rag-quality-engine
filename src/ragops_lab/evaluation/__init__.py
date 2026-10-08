@@ -16,6 +16,8 @@ from .benchmark import (
 from .golden import GoldenSetExample, rebuild_golden_set
 from .service import (
     ClaimSupportJudge,
+    EmbeddingClaimSupportJudge,
+    EmbeddingRelevanceJudge,
     LexicalClaimSupportJudge,
     OverlapJudge,
     RelevanceJudge,
@@ -27,8 +29,10 @@ from .service import (
 __all__ = [
     "RelevanceJudge",
     "OverlapJudge",
+    "EmbeddingRelevanceJudge",
     "ClaimSupportJudge",
     "LexicalClaimSupportJudge",
+    "EmbeddingClaimSupportJudge",
     "GoldenSetExample",
     "rebuild_golden_set",
     "evaluate_answer",

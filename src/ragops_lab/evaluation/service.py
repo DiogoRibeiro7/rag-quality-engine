@@ -10,6 +10,7 @@ from typing import Protocol
 from ragops_lab.domain import ClaimSupportResult, EvaluationResult, GeneratedAnswer, RetrievalResult
 
 from ..retrieval.tokenizer import tokenize
+from ..retrieval.vector import EmbeddingClient, cosine_similarity
 
 CLAIM_SUPPORT_THRESHOLD = 0.65
 STOPWORDS = frozenset(
@@ -146,6 +147,24 @@ class OverlapJudge:
         return min(1.0, aligned / len(question_terms))
 
 
+class EmbeddingRelevanceJudge:
+    """Semantic answer relevance judge backed by embeddings."""
+
+    def __init__(self, embedding_client: EmbeddingClient) -> None:
+        self.embedding_client = embedding_client
+
+    def score(self, question: str, answer_text: str, references: str) -> float:
+        """Score answer relevance from semantic similarity to question and references."""
+        if not question.strip() or not answer_text.strip():
+            return 0.0
+        vectors = self.embedding_client.embed_texts([question, answer_text, references])
+        question_score = cosine_similarity(vectors[0], vectors[1])
+        if not references.strip():
+            return question_score
+        reference_score = cosine_similarity(vectors[1], vectors[2])
+        return min(1.0, (question_score + reference_score) / 2.0)
+
+
 class ClaimSupportJudge(Protocol):
     """Judge abstraction used for claim-level faithfulness scoring."""
 
@@ -219,6 +238,74 @@ class LexicalClaimSupportJudge:
             evidence_chunk_id=best_chunk_id,
             matched_terms=best_matched,
             missing_terms=best_missing if not supported else [],
+        )
+
+
+class EmbeddingClaimSupportJudge:
+    """Semantic claim-support judge backed by embeddings."""
+
+    def __init__(
+        self,
+        embedding_client: EmbeddingClient,
+        *,
+        support_threshold: float = CLAIM_SUPPORT_THRESHOLD,
+    ) -> None:
+        if not 0.0 <= support_threshold <= 1.0:
+            raise ValueError("support_threshold must be between 0 and 1.")
+        self.embedding_client = embedding_client
+        self.support_threshold = support_threshold
+
+    def score_claim(
+        self,
+        claim: str,
+        evidence: list[RetrievalResult],
+    ) -> ClaimSupportResult:
+        """Score a claim against the most semantically similar evidence chunk."""
+        claim_terms = _content_terms(claim)
+        if not claim_terms:
+            return ClaimSupportResult(
+                claim=claim,
+                supported=True,
+                score=1.0,
+                matched_terms=[],
+                missing_terms=[],
+            )
+        if not evidence:
+            return ClaimSupportResult(
+                claim=claim,
+                supported=False,
+                score=0.0,
+                matched_terms=[],
+                missing_terms=claim_terms,
+            )
+
+        texts = [claim, *[result.chunk.text for result in evidence]]
+        vectors = self.embedding_client.embed_texts(texts)
+        claim_vector = vectors[0]
+        scores = [
+            cosine_similarity(claim_vector, evidence_vector)
+            for evidence_vector in vectors[1:]
+        ]
+        best_index = max(range(len(scores)), key=scores.__getitem__)
+        best_result = evidence[best_index]
+        best_score = scores[best_index]
+
+        claim_numbers = {term for term in claim_terms if term.isdigit()}
+        evidence_terms = set(_content_terms(best_result.chunk.text))
+        missing_numbers = sorted(claim_numbers - evidence_terms)
+        if missing_numbers:
+            best_score = 0.0
+
+        supported = best_score >= self.support_threshold
+        matched_terms = sorted(set(claim_terms) & evidence_terms)
+        missing_terms = sorted(set(claim_terms) - evidence_terms)
+        return ClaimSupportResult(
+            claim=claim,
+            supported=supported,
+            score=best_score,
+            evidence_chunk_id=best_result.chunk.chunk_id,
+            matched_terms=matched_terms,
+            missing_terms=[] if supported else missing_terms,
         )
 
 

@@ -70,22 +70,18 @@ The repository includes a working local MVP with:
 - Added golden-set rebuild tooling based on stable evidence phrases.
 - Added sentence-aware chunking with exact source offsets and safe fallback for
   oversized sentences.
+- Added opt-in embedding-backed semantic judges for answer relevance and
+  claim-level support.
 
 ## Known issues and bugs
 
 These are confirmed defects with concrete reproduction paths. They should be
 fixed before the behaviours they affect are relied on.
 
-- **`OverlapJudge` answer-relevance is a weak proxy.** It scores how many query
-  terms reappear in the answer, which yields structurally low values and is not
-  safe to use as a quality gate (only as a trend signal). *Fix:* add a
-  model-based or embedding-based relevance judge behind the existing
-  `RelevanceJudge` protocol.
-- **Faithfulness still uses lexical matching.** Claim support is now scored at
-  claim level against cited evidence with stopword filtering, light stemming,
-  and strict number matching. It is stronger than subset matching, but it is
-  still not semantic entailment. *Fix:* add an embedding or LLM judge behind the
-  existing `ClaimSupportJudge` protocol.
+- **Lexical judges remain the deterministic defaults.** `OverlapJudge` and
+  `LexicalClaimSupportJudge` remain useful offline baselines, but they should
+  not be treated as semantic entailment. Opt-in embedding-backed relevance and
+  claim-support judges are now available behind the same protocols.
 
 ## Milestone 1 — Complete the evaluation pipeline
 
@@ -139,8 +135,10 @@ fixed before the behaviours they affect are relied on.
 - **Token- and sentence-aware chunking.** Sentence-aware chunking is now
   implemented with exact offsets and long-sentence fallback. Token-aware
   chunking remains a future extension.
-- **Model-as-judge evaluation.** Pluggable LLM judges for relevance and
-  faithfulness, with the deterministic lexical judges kept as the offline path.
+- **Semantic evaluation judges.** Completed: embedding-backed relevance and
+  claim-support judges are available behind the existing evaluation protocols,
+  with deterministic lexical judges retained as the offline default. A
+  provider-backed LLM judge remains a possible future extension.
 - **Cost and latency budgets.** Completed: benchmark cases now record latency
   and token estimates, summaries report p95 values, and optional p95 budgets can
   participate in CI pass/fail alongside quality thresholds.

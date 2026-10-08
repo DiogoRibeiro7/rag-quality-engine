@@ -27,6 +27,7 @@ This project is built to demonstrate practical AI engineering, not just prompt w
 - Supports retrieve-then-rerank pipelines with a deterministic offline reranker.
 - Generates evidence-grounded answers with citation validation.
 - Evaluates context precision, context recall, claim-level faithfulness, citation support, unsupported claims, and refusal correctness.
+- Provides opt-in embedding-backed semantic judges for answer relevance and claim support while keeping deterministic lexical judges as the offline default.
 - Stores RAG traces with latency and token estimates.
 - Exposes the workflow through both a CLI and a FastAPI service.
 - Includes prompt regression coverage and an analytical notebook suite (see below).
