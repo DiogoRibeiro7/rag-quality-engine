@@ -74,6 +74,8 @@ The repository includes a working local MVP with:
   claim-level support.
 - Added trace-dashboard KPIs, quality-state columns, and attention highlighting
   for weak traces.
+- Modernized the API container, added a health endpoint, and documented local
+  and public-demo deployment workflows.
 
 ## Known issues and bugs
 
@@ -124,7 +126,7 @@ fixed before the behaviours they affect are relied on.
 - [x] Improve the dashboard into a more useful inspection surface for traces and metrics.
 - [x] Add richer API usage documentation and example payloads.
 - [x] Add release notes and a first tagged release from `main`.
-- [ ] Add deployment guidance for local demos and portfolio presentation.
+- [x] Add deployment guidance for local demos and portfolio presentation.
 
 ## Planned features
 
