@@ -21,6 +21,7 @@ def test_api_health_endpoint() -> None:
     assert response.status_code == 200
     assert response.json() == {"status": "ok", "version": __version__}
 
+
 def test_api_end_to_end(tmp_path: Path) -> None:
     client = TestClient(app)
     raw_dir = tmp_path / "raw"
