@@ -26,7 +26,7 @@ This project is built to demonstrate practical AI engineering, not just prompt w
 
 ## What it does
 
-- Ingests `.txt`, `.md`, `.csv`, and optionally `.pdf` documents with boundary-aware character or sentence-aware chunking.
+- Ingests `.txt`, `.md`, `.csv`, and optionally `.pdf` documents with boundary-aware character, sentence-aware, or token-aware chunking.
 - Supports lexical, vector, and hybrid retrieval through package APIs.
 - Supports retrieve-then-rerank pipelines with a deterministic offline reranker.
 - Generates evidence-grounded answers with citation validation.
@@ -63,6 +63,18 @@ poetry run rag-quality-engine ingest data/sample_documents \
 ```
 
 The `sentence` strategy groups complete sentences whenever they fit within the configured size and falls back safely for unusually long single sentences while preserving exact source offsets.
+
+For token-aware chunking, `chunk_size` and `overlap` are interpreted as lexical-token counts:
+
+```bash
+poetry run rag-quality-engine ingest data/sample_documents \
+  --out data/processed/chunks.jsonl \
+  --strategy tokens \
+  --chunk-size 200 \
+  --overlap 20
+```
+
+The `tokens` strategy derives token spans from the original source text, so punctuation and whitespace between boundary tokens are preserved and chunk offsets still reproduce the exact source substring.
 
 ### 3. Ask a question
 
