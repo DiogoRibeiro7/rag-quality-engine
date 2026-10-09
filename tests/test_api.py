@@ -57,7 +57,6 @@ def test_api_end_to_end(tmp_path: Path) -> None:
     assert trace_id in dashboard_response.text
 
 
-
 def test_dashboard_renders_quality_kpis_and_attention_rows(tmp_path: Path) -> None:
     client = TestClient(app)
     raw_dir = tmp_path / "raw"
@@ -210,7 +209,6 @@ def test_api_search_uses_named_retrieval_profile_with_overrides(tmp_path: Path) 
     assert response.status_code == 200
     assert response.json()[0]["retrieval_method"] == "hybrid"
     assert response.json()[0]["chunk"]["chunk_id"] == "apollo:0"
-
 
 
 def test_api_search_can_enable_reranking(tmp_path: Path) -> None:
