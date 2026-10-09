@@ -70,6 +70,7 @@ The repository includes a working local MVP with:
 - Added golden-set rebuild tooling based on stable evidence phrases.
 - Added sentence-aware chunking with exact source offsets and safe fallback for
   oversized sentences.
+- Added token-aware chunking with token-count overlap and exact source offsets.
 - Added opt-in embedding-backed semantic judges for answer relevance and
   claim-level support.
 - Added trace-dashboard KPIs, quality-state columns, and attention highlighting
@@ -136,9 +137,9 @@ fixed before the behaviours they affect are relied on.
 - **Reciprocal Rank Fusion.** Completed: `HybridRetriever` now supports RRF as
   an alternative to weighted score fusion, removing the need to calibrate raw
   lexical and vector score scales.
-- **Token- and sentence-aware chunking.** Sentence-aware chunking is now
-  implemented with exact offsets and long-sentence fallback. Token-aware
-  chunking remains a future extension.
+- **Token- and sentence-aware chunking.** Completed: sentence-aware and
+  token-aware chunking are implemented with exact source offsets; character
+  chunking remains the backwards-compatible default.
 - **Semantic evaluation judges.** Completed: embedding-backed relevance and
   claim-support judges are available behind the existing evaluation protocols,
   with deterministic lexical judges retained as the offline default. A
