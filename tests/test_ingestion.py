@@ -56,7 +56,7 @@ def test_chunk_document_rejects_unsupported_strategy() -> None:
     )
 
     with pytest.raises(ValueError, match="Unsupported chunking strategy"):
-        chunk_document(document, ChunkingConfig(strategy="tokens"))
+        chunk_document(document, ChunkingConfig(strategy="unknown"))
 
 
 def test_chunk_document_avoids_splitting_words_and_preserves_offsets() -> None:
