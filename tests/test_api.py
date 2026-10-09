@@ -429,3 +429,29 @@ def test_api_ingest_supports_sentence_strategy(tmp_path: Path) -> None:
     chunks = load_chunks_jsonl(chunks_path)
     assert len(chunks) >= 2
     assert all(chunk.text.endswith((".", "!", "?")) for chunk in chunks)
+
+
+def test_api_ingest_supports_token_strategy(tmp_path: Path) -> None:
+    client = TestClient(app)
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    (raw_dir / "tokens.txt").write_text(
+        "alpha beta gamma delta epsilon",
+        encoding="utf-8",
+    )
+    chunks_path = tmp_path / "chunks.jsonl"
+
+    response = client.post(
+        "/ingest",
+        json={
+            "input_dir": str(raw_dir),
+            "out_path": str(chunks_path),
+            "chunk_size": 3,
+            "overlap": 1,
+            "strategy": "tokens",
+        },
+    )
+
+    assert response.status_code == 200
+    chunks = load_chunks_jsonl(chunks_path)
+    assert [chunk.token_count for chunk in chunks] == [3, 3]
