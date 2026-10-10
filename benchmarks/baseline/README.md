@@ -22,6 +22,7 @@ Inspect the results under `artifacts/evaluation/`, including:
 - `benchmark-summary.json`
 - `cases.json`
 - `benchmark-summary.md`
+- promoted baselines also include `manifest.json`
 - per-run artifacts
 
 Only after reviewing the results should you promote them:
@@ -32,6 +33,8 @@ poetry run rag-quality-engine benchmark-promote
 
 The command validates that the benchmark passed, the case count matches the
 summary, and case queries are unique before writing the canonical baseline files.
+It also writes `manifest.json` with the project version, Git commit SHA,
+promotion timestamp, and benchmark fingerprint.
 
 Commit those files in a dedicated pull request.
 
@@ -45,6 +48,9 @@ The comparison uses:
 ```bash
 make benchmark-baseline-check
 ```
+
+When `manifest.json` is present, the gate prints it before comparison so CI
+logs identify the approved baseline version and commit.
 
 The gate:
 

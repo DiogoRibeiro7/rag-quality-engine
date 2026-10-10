@@ -71,6 +71,8 @@ The repository includes a working local MVP with:
   responsible for regressions.
 - Added an optional CI benchmark-baseline gate with deliberate, reviewed
   baseline promotion.
+- Added baseline manifest metadata so approved benchmarks record project version,
+  Git commit, promotion time, and benchmark fingerprint.
 - Added optional p95 latency and token budget gates to benchmark regression
   checks.
 - Added golden-set rebuild tooling based on stable evidence phrases.

@@ -302,3 +302,4 @@ def test_cli_benchmark_promote_writes_baseline(tmp_path: Path) -> None:
     assert result.exit_code == 0
     assert (baseline_dir / "benchmark-summary.json").exists()
     assert (baseline_dir / "cases.json").exists()
+    assert (baseline_dir / "manifest.json").exists()

@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 from ragops_lab.evaluation.benchmark import (
+    BenchmarkBaselineManifest,
     BenchmarkCaseComparison,
     BenchmarkComparison,
     BenchmarkProvenance,
@@ -16,6 +17,7 @@ from ragops_lab.evaluation.benchmark import (
     build_benchmark_provenance,
     compare_benchmark_summaries,
     compare_evaluation_cases,
+    load_benchmark_baseline_manifest,
     load_benchmark_summary,
     load_evaluation_cases,
     load_golden_examples,
@@ -27,6 +29,7 @@ from ragops_lab.evaluation.benchmark import (
 )
 
 __all__ = [
+    "BenchmarkBaselineManifest",
     "BenchmarkCaseComparison",
     "BenchmarkComparison",
     "BenchmarkProvenance",
@@ -37,6 +40,7 @@ __all__ = [
     "build_benchmark_provenance",
     "compare_benchmark_summaries",
     "compare_evaluation_cases",
+    "load_benchmark_baseline_manifest",
     "load_benchmark_summary",
     "load_evaluation_cases",
     "load_golden_examples",

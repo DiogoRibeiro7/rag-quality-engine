@@ -6,11 +6,14 @@ import csv
 import hashlib
 import json
 import math
+import os
+from datetime import UTC, datetime
 from pathlib import Path
 from time import perf_counter
 
 from pydantic import BaseModel, Field
 
+from ragops_lab import __version__
 from ragops_lab.domain import EvaluationResult, GeneratedAnswer
 from ragops_lab.evaluation.service import evaluate_answer
 from ragops_lab.generation import GenerationService, HeuristicLLMClient
@@ -111,6 +114,15 @@ class BenchmarkSummary(BaseModel):
     provenance: BenchmarkProvenance
     passed: bool
 
+
+
+class BenchmarkBaselineManifest(BaseModel):
+    """Identity metadata for an approved benchmark baseline."""
+
+    project_version: str = Field(min_length=1)
+    git_commit: str = Field(min_length=1)
+    promoted_at: datetime
+    benchmark_fingerprint: str = Field(min_length=64, max_length=64)
 
 
 class BenchmarkCaseComparison(BaseModel):
@@ -232,12 +244,44 @@ def compare_evaluation_cases(
     return comparisons
 
 
+def _resolve_git_commit(repository_root: Path = Path(".")) -> str:
+    """Resolve the current commit without invoking a subprocess."""
+    github_sha = os.getenv("GITHUB_SHA")
+    if github_sha:
+        return github_sha.strip()
+
+    git_dir = repository_root / ".git"
+    head_path = git_dir / "HEAD"
+    if not head_path.exists():
+        return "unknown"
+
+    head = head_path.read_text(encoding="utf-8").strip()
+    if not head.startswith("ref: "):
+        return head or "unknown"
+
+    ref_path = git_dir / head.removeprefix("ref: ")
+    if ref_path.exists():
+        return ref_path.read_text(encoding="utf-8").strip() or "unknown"
+    return "unknown"
+
+
+def load_benchmark_baseline_manifest(path: Path) -> BenchmarkBaselineManifest:
+    """Load and validate a promoted baseline manifest."""
+    if not path.exists():
+        raise ValueError(f"Benchmark baseline manifest not found: {path}")
+    return BenchmarkBaselineManifest.model_validate_json(
+        path.read_text(encoding="utf-8")
+    )
+
+
 def promote_benchmark_baseline(
     *,
     summary_path: Path,
     cases_path: Path,
     output_dir: Path,
-) -> tuple[Path, Path]:
+    git_commit: str | None = None,
+    promoted_at: datetime | None = None,
+) -> tuple[Path, Path, Path]:
     """Validate and promote benchmark artifacts into a CI baseline directory."""
     summary = load_benchmark_summary(summary_path)
     cases = load_evaluation_cases(cases_path)
@@ -257,12 +301,23 @@ def promote_benchmark_baseline(
     output_dir.mkdir(parents=True, exist_ok=True)
     summary_out = output_dir / "benchmark-summary.json"
     cases_out = output_dir / "cases.json"
+    manifest_out = output_dir / "manifest.json"
     summary_out.write_text(summary.model_dump_json(indent=2) + "\n", encoding="utf-8")
     cases_out.write_text(
         json.dumps([case.model_dump(mode="json") for case in cases], indent=2) + "\n",
         encoding="utf-8",
     )
-    return summary_out, cases_out
+    manifest = BenchmarkBaselineManifest(
+        project_version=__version__,
+        git_commit=(git_commit or _resolve_git_commit()).strip() or "unknown",
+        promoted_at=promoted_at or datetime.now(UTC),
+        benchmark_fingerprint=summary.provenance.fingerprint,
+    )
+    manifest_out.write_text(
+        manifest.model_dump_json(indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return summary_out, cases_out, manifest_out
 
 
 def load_benchmark_summary(path: Path) -> BenchmarkSummary:

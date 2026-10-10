@@ -25,6 +25,7 @@ benchmark:
 
 benchmark-baseline-check:
 	@if [ -f benchmarks/baseline/benchmark-summary.json ] && [ -f benchmarks/baseline/cases.json ]; then \
+		if [ -f benchmarks/baseline/manifest.json ]; then cat benchmarks/baseline/manifest.json; fi; \
 		poetry run rag-quality-engine benchmark-compare \
 			benchmarks/baseline/benchmark-summary.json \
 			artifacts/evaluation/benchmark-summary.json \

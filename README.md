@@ -289,7 +289,8 @@ For CI, `make benchmark-baseline-check` performs the same summary + per-query
 comparison when `benchmarks/baseline/benchmark-summary.json` and
 `benchmarks/baseline/cases.json` are committed. After reviewing a fresh
 evaluation, `poetry run rag-quality-engine benchmark-promote` validates and
-writes those canonical baseline files. If no approved baseline is
+writes those canonical baseline files plus a `manifest.json` recording the
+project version, Git commit, promotion timestamp, and benchmark fingerprint. If no approved baseline is
 present, the check is skipped. See
 [`benchmarks/baseline/README.md`](benchmarks/baseline/README.md) for the
 deliberate baseline-promotion workflow.

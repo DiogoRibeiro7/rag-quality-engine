@@ -481,16 +481,22 @@ def test_promote_benchmark_baseline_writes_validated_artifacts(tmp_path: Path) -
     evaluate_rag.write_benchmark_artifacts(summary, runs, output_dir)
 
     baseline_dir = tmp_path / "baseline"
-    summary_out, cases_out = evaluate_rag.promote_benchmark_baseline(
+    summary_out, cases_out, manifest_out = evaluate_rag.promote_benchmark_baseline(
         summary_path=output_dir / "benchmark-summary.json",
         cases_path=output_dir / "cases.json",
         output_dir=baseline_dir,
+        git_commit="abc123",
     )
 
     assert summary_out == baseline_dir / "benchmark-summary.json"
     assert cases_out == baseline_dir / "cases.json"
+    assert manifest_out == baseline_dir / "manifest.json"
     assert evaluate_rag.load_benchmark_summary(summary_out).passed is True
     assert len(evaluate_rag.load_evaluation_cases(cases_out)) == summary.case_count
+    manifest = evaluate_rag.load_benchmark_baseline_manifest(manifest_out)
+    assert manifest.project_version == "0.2.0"
+    assert manifest.git_commit == "abc123"
+    assert manifest.benchmark_fingerprint == summary.provenance.fingerprint
 
 
 def test_promote_benchmark_baseline_rejects_failed_summary(tmp_path: Path) -> None:
