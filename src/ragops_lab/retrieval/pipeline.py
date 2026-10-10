@@ -8,8 +8,8 @@ from ragops_lab.domain import RetrievalResult
 from .reranking import (
     EmbeddingSimilarityReranker,
     LexicalOverlapReranker,
-    Retriever,
     Reranker,
+    Retriever,
     RetrieveThenRerank,
 )
 from .vector import EmbeddingClient
