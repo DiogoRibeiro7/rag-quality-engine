@@ -21,6 +21,7 @@ def test_api_health_endpoint() -> None:
     assert response.status_code == 200
     assert response.json() == {"status": "ok", "version": __version__}
 
+
 def test_api_end_to_end(tmp_path: Path) -> None:
     client = TestClient(app)
     raw_dir = tmp_path / "raw"
@@ -54,7 +55,6 @@ def test_api_end_to_end(tmp_path: Path) -> None:
     assert dashboard_response.status_code == 200
     assert "RAG Quality Engine Traces" in dashboard_response.text
     assert trace_id in dashboard_response.text
-
 
 
 def test_dashboard_renders_quality_kpis_and_attention_rows(tmp_path: Path) -> None:
@@ -209,7 +209,6 @@ def test_api_search_uses_named_retrieval_profile_with_overrides(tmp_path: Path) 
     assert response.status_code == 200
     assert response.json()[0]["retrieval_method"] == "hybrid"
     assert response.json()[0]["chunk"]["chunk_id"] == "apollo:0"
-
 
 
 def test_api_search_can_enable_reranking(tmp_path: Path) -> None:
@@ -429,3 +428,29 @@ def test_api_ingest_supports_sentence_strategy(tmp_path: Path) -> None:
     chunks = load_chunks_jsonl(chunks_path)
     assert len(chunks) >= 2
     assert all(chunk.text.endswith((".", "!", "?")) for chunk in chunks)
+
+
+def test_api_ingest_supports_token_strategy(tmp_path: Path) -> None:
+    client = TestClient(app)
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    (raw_dir / "tokens.txt").write_text(
+        "alpha beta gamma delta epsilon",
+        encoding="utf-8",
+    )
+    chunks_path = tmp_path / "chunks.jsonl"
+
+    response = client.post(
+        "/ingest",
+        json={
+            "input_dir": str(raw_dir),
+            "out_path": str(chunks_path),
+            "chunk_size": 3,
+            "overlap": 1,
+            "strategy": "tokens",
+        },
+    )
+
+    assert response.status_code == 200
+    chunks = load_chunks_jsonl(chunks_path)
+    assert [chunk.token_count for chunk in chunks] == [3, 3]

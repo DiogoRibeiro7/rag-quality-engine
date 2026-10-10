@@ -78,9 +78,10 @@ Example response:
 ```
 
 Supported input formats are `.txt`, `.md`, `.csv`, and `.pdf` when the optional
-PDF dependency is installed. Chunking strategies are `chars` (default) and
-`sentence`; sentence-aware chunking keeps complete sentence boundaries whenever
-possible while preserving exact source offsets.
+PDF dependency is installed. Chunking strategies are `chars` (default), `sentence`, and `tokens`.
+Sentence-aware chunking keeps complete sentence boundaries whenever possible.
+Token-aware chunking interprets `chunk_size` and `overlap` as lexical-token
+counts. All strategies preserve exact source offsets.
 
 ## Build a Vector Index
 

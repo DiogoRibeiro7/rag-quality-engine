@@ -56,7 +56,7 @@ def test_chunk_document_rejects_unsupported_strategy() -> None:
     )
 
     with pytest.raises(ValueError, match="Unsupported chunking strategy"):
-        chunk_document(document, ChunkingConfig(strategy="tokens"))
+        chunk_document(document, ChunkingConfig(strategy="unknown"))
 
 
 def test_chunk_document_avoids_splitting_words_and_preserves_offsets() -> None:
@@ -184,3 +184,73 @@ def test_cli_ingest_supports_sentence_strategy(tmp_path: Path) -> None:
     chunks = load_chunks_jsonl(output_path)
     assert len(chunks) >= 2
     assert all(chunk.text.endswith((".", "!", "?")) for chunk in chunks)
+
+
+def test_token_chunking_respects_token_count_and_offsets() -> None:
+    text = "alpha, beta gamma; delta epsilon zeta eta theta"
+    document = Document(document_id="doc", title="Doc", text=text)
+
+    chunks = chunk_document(
+        document,
+        ChunkingConfig(chunk_size=3, overlap=1, strategy="tokens"),
+    )
+
+    assert [chunk.token_count for chunk in chunks] == [3, 3, 3, 2]
+    for chunk in chunks:
+        assert chunk.token_count <= 3
+        assert document.text[chunk.start_offset : chunk.end_offset] == chunk.text
+
+
+def test_token_chunking_preserves_overlap_and_punctuation() -> None:
+    text = "alpha, beta gamma; delta epsilon"
+    document = Document(document_id="doc", title="Doc", text=text)
+
+    chunks = chunk_document(
+        document,
+        ChunkingConfig(chunk_size=3, overlap=1, strategy="tokens"),
+    )
+
+    assert chunks[0].text == "alpha, beta gamma"
+    assert chunks[1].text == "gamma; delta epsilon"
+    assert chunks[0].end_offset > chunks[1].start_offset
+
+
+def test_token_chunking_empty_input_returns_no_chunks() -> None:
+    document = Document(document_id="doc", title="Doc", text="... !!! ???")
+
+    chunks = chunk_document(
+        document,
+        ChunkingConfig(chunk_size=3, overlap=1, strategy="tokens"),
+    )
+
+    assert chunks == []
+
+
+def test_cli_ingest_supports_token_strategy(tmp_path: Path) -> None:
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    (raw_dir / "doc.txt").write_text(
+        "alpha beta gamma delta epsilon",
+        encoding="utf-8",
+    )
+    output_path = tmp_path / "chunks.jsonl"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "ingest",
+            str(raw_dir),
+            "--out",
+            str(output_path),
+            "--strategy",
+            "tokens",
+            "--chunk-size",
+            "3",
+            "--overlap",
+            "1",
+        ],
+    )
+
+    assert result.exit_code == 0
+    chunks = load_chunks_jsonl(output_path)
+    assert [chunk.token_count for chunk in chunks] == [3, 3]

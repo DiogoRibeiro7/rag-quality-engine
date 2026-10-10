@@ -11,7 +11,7 @@ from typing import Protocol
 
 from ragops_lab.domain import Document, DocumentChunk
 
-from ..retrieval.tokenizer import tokenize
+from ..retrieval.tokenizer import TOKEN_PATTERN, tokenize
 
 
 class PdfExtractor(Protocol):
@@ -30,7 +30,7 @@ class ChunkingConfig:
     strategy: str = "chars"
 
 
-SUPPORTED_CHUNKING_STRATEGIES = frozenset({"chars", "sentence"})
+SUPPORTED_CHUNKING_STRATEGIES = frozenset({"chars", "sentence", "tokens"})
 
 
 def slugify(value: str) -> str:
@@ -275,6 +275,47 @@ def _chunk_document_sentences(
     return chunks
 
 
+def _token_spans(text: str) -> list[tuple[int, int]]:
+    """Return source-text spans for lexical tokens."""
+    return [(match.start(), match.end()) for match in TOKEN_PATTERN.finditer(text.lower())]
+
+
+def _chunk_document_tokens(
+    document: Document,
+    chunking: ChunkingConfig,
+) -> list[DocumentChunk]:
+    """Split a document by lexical token count while preserving source offsets."""
+    spans = _token_spans(document.text)
+    if not spans:
+        return []
+
+    chunks: list[DocumentChunk] = []
+    step = chunking.chunk_size - chunking.overlap
+    start_token = 0
+    index = 0
+
+    while start_token < len(spans):
+        end_token = min(len(spans), start_token + chunking.chunk_size)
+        start = spans[start_token][0]
+        end = spans[end_token - 1][1]
+        content_start, content_end = _trimmed_span(document.text, start, end)
+        if content_start < content_end:
+            chunks.append(
+                _build_chunk(
+                    document,
+                    index=index,
+                    start=content_start,
+                    end=content_end,
+                )
+            )
+            index += 1
+        if end_token >= len(spans):
+            break
+        start_token += step
+
+    return chunks
+
+
 def chunk_document(document: Document, config: ChunkingConfig | None = None) -> list[DocumentChunk]:
     """Split a document using the configured chunking strategy."""
     chunking = config or ChunkingConfig()
@@ -289,6 +330,8 @@ def chunk_document(document: Document, config: ChunkingConfig | None = None) -> 
         )
     if chunking.strategy == "sentence":
         return _chunk_document_sentences(document, chunking)
+    if chunking.strategy == "tokens":
+        return _chunk_document_tokens(document, chunking)
     return _chunk_document_chars(document, chunking)
 
 
