@@ -125,7 +125,6 @@ class BenchmarkCaseComparison(BaseModel):
     latency_ms_delta: float = 0.0
     token_estimate_delta: int = 0
     regressions: list[str] = Field(default_factory=list)
-    case_comparisons: list[BenchmarkCaseComparison] = Field(default_factory=list)
 
     @property
     def has_regressions(self) -> bool:
@@ -149,6 +148,7 @@ class BenchmarkComparison(BaseModel):
     p95_latency_ms_delta: float
     p95_token_estimate_delta: int
     regressions: list[str] = Field(default_factory=list)
+    case_comparisons: list[BenchmarkCaseComparison] = Field(default_factory=list)
 
     @property
     def has_regressions(self) -> bool:
