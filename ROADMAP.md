@@ -65,6 +65,8 @@ The repository includes a working local MVP with:
   examples.
 - Added benchmark provenance fingerprints covering corpus bytes, evaluation
   fixtures, and chunking configuration.
+- Added benchmark comparison tooling with provenance checks and regression
+  classification.
 - Added optional p95 latency and token budget gates to benchmark regression
   checks.
 - Added golden-set rebuild tooling based on stable evidence phrases.
