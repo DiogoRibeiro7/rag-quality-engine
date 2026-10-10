@@ -24,8 +24,8 @@ from ragops_lab.evaluation.benchmark import (
     load_golden_examples,
     promote_benchmark_baseline,
     run_benchmark,
-    validate_benchmark_baseline,
     run_evaluation,
+    validate_benchmark_baseline,
     write_artifacts,
     write_benchmark_artifacts,
 )
