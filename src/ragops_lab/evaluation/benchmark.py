@@ -232,6 +232,39 @@ def compare_evaluation_cases(
     return comparisons
 
 
+def promote_benchmark_baseline(
+    *,
+    summary_path: Path,
+    cases_path: Path,
+    output_dir: Path,
+) -> tuple[Path, Path]:
+    """Validate and promote benchmark artifacts into a CI baseline directory."""
+    summary = load_benchmark_summary(summary_path)
+    cases = load_evaluation_cases(cases_path)
+
+    if not summary.passed:
+        raise ValueError("Cannot promote a benchmark that did not pass.")
+    if len(cases) != summary.case_count:
+        raise ValueError(
+            "Case count does not match benchmark summary: "
+            f"{len(cases)} != {summary.case_count}."
+        )
+
+    queries = [case.query for case in cases]
+    if len(set(queries)) != len(queries):
+        raise ValueError("Benchmark cases must contain unique queries.")
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    summary_out = output_dir / "benchmark-summary.json"
+    cases_out = output_dir / "cases.json"
+    summary_out.write_text(summary.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    cases_out.write_text(
+        json.dumps([case.model_dump(mode="json") for case in cases], indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return summary_out, cases_out
+
+
 def load_benchmark_summary(path: Path) -> BenchmarkSummary:
     """Load one persisted benchmark summary JSON file."""
     if not path.exists():
