@@ -301,12 +301,23 @@ def promote_benchmark_baseline(
     output_dir.mkdir(parents=True, exist_ok=True)
     summary_out = output_dir / "benchmark-summary.json"
     cases_out = output_dir / "cases.json"
+    manifest_out = output_dir / "manifest.json"
     summary_out.write_text(summary.model_dump_json(indent=2) + "\n", encoding="utf-8")
     cases_out.write_text(
         json.dumps([case.model_dump(mode="json") for case in cases], indent=2) + "\n",
         encoding="utf-8",
     )
-    return summary_out, cases_out
+    manifest = BenchmarkBaselineManifest(
+        project_version=__version__,
+        git_commit=(git_commit or _resolve_git_commit()).strip() or "unknown",
+        promoted_at=promoted_at or datetime.now(UTC),
+        benchmark_fingerprint=summary.provenance.fingerprint,
+    )
+    manifest_out.write_text(
+        manifest.model_dump_json(indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return summary_out, cases_out, manifest_out
 
 
 def load_benchmark_summary(path: Path) -> BenchmarkSummary:
