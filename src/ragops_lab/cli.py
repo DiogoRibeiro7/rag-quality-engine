@@ -11,7 +11,9 @@ from rich.table import Table
 
 from .config import RuntimeSettings
 from .evaluation import (
+    compare_benchmark_summaries,
     evaluate_answer,
+    load_benchmark_summary,
     rebuild_golden_set,
     run_benchmark,
     write_benchmark_artifacts,
@@ -210,6 +212,49 @@ def golden_rebuild(
     except ValueError as exc:
         _fail(str(exc))
     console.print({"examples_written": len(examples), "out": str(out)})
+
+
+@app.command("benchmark-compare")
+def benchmark_compare(
+    baseline: Path,
+    candidate: Path,
+    allow_mismatched_fingerprints: bool = False,
+) -> None:
+    """Compare two persisted benchmark summaries."""
+    try:
+        baseline_summary = load_benchmark_summary(baseline)
+        candidate_summary = load_benchmark_summary(candidate)
+        comparison = compare_benchmark_summaries(
+            baseline=baseline_summary,
+            candidate=candidate_summary,
+            baseline_path=baseline,
+            candidate_path=candidate,
+            allow_mismatched_fingerprints=allow_mismatched_fingerprints,
+        )
+    except ValueError as exc:
+        _fail(str(exc))
+
+    table = Table(title="Benchmark Comparison")
+    table.add_column("Metric")
+    table.add_column("Delta")
+    table.add_row("Recall@k", f"{comparison.recall_at_k_delta:+.4f}")
+    table.add_row("MRR", f"{comparison.mean_reciprocal_rank_delta:+.4f}")
+    table.add_row("Faithfulness", f"{comparison.faithfulness_delta:+.4f}")
+    table.add_row("Citation support", f"{comparison.citation_support_delta:+.4f}")
+    table.add_row("Refusal accuracy", f"{comparison.refusal_accuracy_delta:+.4f}")
+    table.add_row("p95 latency ms", f"{comparison.p95_latency_ms_delta:+.4f}")
+    table.add_row("p95 token estimate", f"{comparison.p95_token_estimate_delta:+d}")
+    table.add_row(
+        "Fingerprint match",
+        "yes" if comparison.fingerprint_match else "no",
+    )
+    table.add_row(
+        "Regressions",
+        ", ".join(comparison.regressions) or "none",
+    )
+    console.print(table)
+    if comparison.has_regressions:
+        raise typer.Exit(1)
 
 
 @app.command()
