@@ -165,7 +165,8 @@ Request overrides:
 | `mode` | `lexical`, `vector`, or `hybrid`. |
 | `top_k` | Defaults to the profile value and is capped by `RAGOPS_API_MAX_TOP_K`. |
 | `lexical_weight` | Hybrid lexical score weight, from `0.0` to `1.0`. |
-| `vector_weight` | Hybrid vector score weight, from `0.0` to `1.0`. |\n| `rerank` | Enable second-stage reranking. |\n| `rerank_candidate_multiplier` | Candidate-pool multiplier before reranking; minimum `1`. |
+| `vector_weight` | Hybrid vector score weight, from `0.0` to `1.0`. |\n| `rerank` | Enable second-stage reranking. |
+| `reranker_strategy` | Reranker implementation: `lexical` (default) or `embedding`. |\n| `rerank_candidate_multiplier` | Candidate-pool multiplier before reranking; minimum `1`. |
 
 ## Ask a Question
 
