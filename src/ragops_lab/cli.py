@@ -15,6 +15,7 @@ from .evaluation import (
     evaluate_answer,
     load_benchmark_summary,
     load_evaluation_cases,
+    promote_benchmark_baseline,
     rebuild_golden_set,
     run_benchmark,
     write_benchmark_artifacts,
@@ -213,6 +214,29 @@ def golden_rebuild(
     except ValueError as exc:
         _fail(str(exc))
     console.print({"examples_written": len(examples), "out": str(out)})
+
+
+@app.command("benchmark-promote")
+def benchmark_promote(
+    summary: Path = Path("artifacts/evaluation/benchmark-summary.json"),
+    cases: Path = Path("artifacts/evaluation/cases.json"),
+    out: Path = Path("benchmarks/baseline"),
+) -> None:
+    """Promote reviewed benchmark artifacts into the CI baseline."""
+    try:
+        summary_out, cases_out = promote_benchmark_baseline(
+            summary_path=summary,
+            cases_path=cases,
+            output_dir=out,
+        )
+    except ValueError as exc:
+        _fail(str(exc))
+    console.print(
+        {
+            "summary": str(summary_out),
+            "cases": str(cases_out),
+        }
+    )
 
 
 @app.command("benchmark-compare")

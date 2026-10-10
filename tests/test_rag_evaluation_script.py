@@ -462,3 +462,88 @@ def test_summary_comparison_can_include_case_regressions(tmp_path: Path) -> None
 
     assert comparison.case_comparisons
     assert any(item.startswith("query:") for item in comparison.regressions)
+
+
+def test_promote_benchmark_baseline_writes_validated_artifacts(tmp_path: Path) -> None:
+    output_dir = tmp_path / "evaluation"
+    summary, runs = evaluate_rag.run_benchmark(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        output_dir=output_dir,
+        runs=1,
+        top_k=2,
+        chunk_size=400,
+        overlap=60,
+        min_faithfulness=0.80,
+        min_citation_support=1.00,
+    )
+    evaluate_rag.write_benchmark_artifacts(summary, runs, output_dir)
+
+    baseline_dir = tmp_path / "baseline"
+    summary_out, cases_out = evaluate_rag.promote_benchmark_baseline(
+        summary_path=output_dir / "benchmark-summary.json",
+        cases_path=output_dir / "cases.json",
+        output_dir=baseline_dir,
+    )
+
+    assert summary_out == baseline_dir / "benchmark-summary.json"
+    assert cases_out == baseline_dir / "cases.json"
+    assert evaluate_rag.load_benchmark_summary(summary_out).passed is True
+    assert len(evaluate_rag.load_evaluation_cases(cases_out)) == summary.case_count
+
+
+def test_promote_benchmark_baseline_rejects_failed_summary(tmp_path: Path) -> None:
+    output_dir = tmp_path / "evaluation"
+    summary, runs = evaluate_rag.run_benchmark(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        output_dir=output_dir,
+        runs=1,
+        top_k=2,
+        chunk_size=400,
+        overlap=60,
+        min_faithfulness=1.0,
+        min_citation_support=1.0,
+        min_refusal_accuracy=1.0,
+        max_p95_token_estimate=1,
+    )
+    evaluate_rag.write_benchmark_artifacts(summary, runs, output_dir)
+
+    with pytest.raises(ValueError, match="did not pass"):
+        evaluate_rag.promote_benchmark_baseline(
+            summary_path=output_dir / "benchmark-summary.json",
+            cases_path=output_dir / "cases.json",
+            output_dir=tmp_path / "baseline",
+        )
+
+
+def test_promote_benchmark_baseline_rejects_case_count_mismatch(tmp_path: Path) -> None:
+    output_dir = tmp_path / "evaluation"
+    summary, runs = evaluate_rag.run_benchmark(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        output_dir=output_dir,
+        runs=1,
+        top_k=2,
+        chunk_size=400,
+        overlap=60,
+        min_faithfulness=0.80,
+        min_citation_support=1.00,
+    )
+    evaluate_rag.write_benchmark_artifacts(summary, runs, output_dir)
+
+    cases = evaluate_rag.load_evaluation_cases(output_dir / "cases.json")
+    (output_dir / "cases.json").write_text(
+        json.dumps([case.model_dump(mode="json") for case in cases[:-1]]),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="Case count does not match"):
+        evaluate_rag.promote_benchmark_baseline(
+            summary_path=output_dir / "benchmark-summary.json",
+            cases_path=output_dir / "cases.json",
+            output_dir=tmp_path / "baseline",
+        )

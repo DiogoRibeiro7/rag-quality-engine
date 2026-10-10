@@ -27,10 +27,11 @@ Inspect the results under `artifacts/evaluation/`, including:
 Only after reviewing the results should you promote them:
 
 ```bash
-mkdir -p benchmarks/baseline
-cp artifacts/evaluation/benchmark-summary.json benchmarks/baseline/benchmark-summary.json
-cp artifacts/evaluation/cases.json benchmarks/baseline/cases.json
+poetry run rag-quality-engine benchmark-promote
 ```
+
+The command validates that the benchmark passed, the case count matches the
+summary, and case queries are unique before writing the canonical baseline files.
 
 Commit those files in a dedicated pull request.
 
