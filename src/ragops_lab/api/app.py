@@ -138,6 +138,7 @@ class SearchRequest(BaseModel):
     fusion_strategy: str | None = Field(default=None)
     rrf_k: int | None = Field(default=None, ge=1)
     rerank: bool | None = Field(default=None)
+    reranker_strategy: str | None = Field(default=None)
     rerank_candidate_multiplier: int | None = Field(default=None, ge=1)
 
     @field_validator("query")
@@ -149,7 +150,14 @@ class SearchRequest(BaseModel):
             max_chars=SETTINGS.api_max_query_chars,
         )
 
-    @field_validator("profile", "chunks_path", "index_path", "mode", "fusion_strategy")
+    @field_validator(
+        "profile",
+        "chunks_path",
+        "index_path",
+        "mode",
+        "fusion_strategy",
+        "reranker_strategy",
+    )
     @classmethod
     def validate_short_text(cls, value: str | None) -> str | None:
         if value is None:
@@ -238,6 +246,7 @@ def _search(request: SearchRequest) -> list[RetrievalResult]:
         fusion_strategy=request.fusion_strategy,
         rrf_k=request.rrf_k,
         rerank=request.rerank,
+        reranker_strategy=request.reranker_strategy,
         rerank_candidate_multiplier=request.rerank_candidate_multiplier,
     )
     if profile.top_k > SETTINGS.api_max_top_k:
@@ -269,7 +278,15 @@ def _search(request: SearchRequest) -> list[RetrievalResult]:
         )
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported retrieval mode: {profile.mode}")
-    return search_with_profile(retriever, profile, request.query)
+    embedding_client = None
+    if profile.rerank and profile.reranker_strategy == "embedding":
+        embedding_client = build_embedding_client(SETTINGS.embeddings)
+    return search_with_profile(
+        retriever,
+        profile,
+        request.query,
+        embedding_client=embedding_client,
+    )
 
 
 @app.post("/ingest")
