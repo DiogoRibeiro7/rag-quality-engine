@@ -20,6 +20,7 @@ from .generation import GenerationService, build_llm_client
 from .ingestion import ChunkingConfig, ingest_directory, load_chunks_jsonl
 from .retrieval import (
     BM25Retriever,
+    EmbeddingClient,
     HybridRetriever,
     LocalVectorIndex,
     Retriever,
@@ -155,7 +156,7 @@ def ask(
             fusion_strategy=retrieval.fusion_strategy,
             rrf_k=retrieval.rrf_k,
         )
-    embedding_client = None
+    embedding_client: EmbeddingClient | None = None
     if retrieval.rerank and retrieval.reranker_strategy == "embedding":
         try:
             embedding_client = build_embedding_client(settings.embeddings)
