@@ -6,6 +6,7 @@ from ragops_lab.config import EmbeddingSettings
 from ragops_lab.domain import DocumentChunk, RetrievalResult
 from ragops_lab.retrieval import (
     BM25Retriever,
+    EmbeddingSimilarityReranker,
     FakeEmbeddingClient,
     HybridRetriever,
     LexicalOverlapReranker,
@@ -275,3 +276,50 @@ def test_retrieve_then_rerank_rejects_invalid_candidate_multiplier() -> None:
         assert "candidate_multiplier" in str(exc)
     else:
         raise AssertionError("Expected invalid candidate multiplier to fail.")
+
+
+class _SemanticStubEmbeddingClient:
+    """Deterministic semantic embedding stub for reranker tests."""
+
+    def embed_texts(self, texts: list[str]) -> list[list[float]]:
+        vectors: list[list[float]] = []
+        for text in texts:
+            normalized = text.lower()
+            if "moon" in normalized or "lunar" in normalized:
+                vectors.append([1.0, 0.0])
+            else:
+                vectors.append([0.0, 1.0])
+        return vectors
+
+    def embed_query(self, query: str) -> list[float]:
+        return self.embed_texts([query])[0]
+
+
+def test_embedding_reranker_can_change_candidate_order() -> None:
+    first, second = _chunks()
+    candidates = [
+        RetrievalResult(
+            chunk=second,
+            score=10.0,
+            rank=1,
+            retrieval_method="hybrid",
+            matched_terms=[],
+        ),
+        RetrievalResult(
+            chunk=first,
+            score=1.0,
+            rank=2,
+            retrieval_method="hybrid",
+            matched_terms=[],
+        ),
+    ]
+
+    results = EmbeddingSimilarityReranker(_SemanticStubEmbeddingClient()).rerank(
+        "lunar mission",
+        candidates,
+        top_k=2,
+    )
+
+    assert results[0].chunk.chunk_id == "apollo:0"
+    assert results[0].retrieval_method == "reranked-hybrid"
+    assert results[0].score == 1.0
