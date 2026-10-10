@@ -34,6 +34,7 @@ def test_runtime_settings_resolves_retrieval_profile_overrides() -> None:
         lexical_weight=0.8,
         vector_weight=0.2,
         rerank=True,
+        reranker_strategy="embedding",
         rerank_candidate_multiplier=3,
     )
 
@@ -42,6 +43,7 @@ def test_runtime_settings_resolves_retrieval_profile_overrides() -> None:
     assert profile.lexical_weight == 0.8
     assert profile.vector_weight == 0.2
     assert profile.rerank is True
+    assert profile.reranker_strategy == "embedding"
     assert profile.rerank_candidate_multiplier == 3
 
 
@@ -120,3 +122,12 @@ def test_runtime_settings_reject_invalid_environment_booleans(
         assert "RAGOPS_DEBUG must be a boolean value" in str(exc)
     else:
         raise AssertionError("Expected invalid boolean environment variable to fail.")
+
+
+def test_retrieval_profile_rejects_invalid_reranker_strategy() -> None:
+    try:
+        RetrievalProfile(name="bad", reranker_strategy="unknown")
+    except ValueError as exc:
+        assert "Unsupported reranker strategy" in str(exc)
+    else:
+        raise AssertionError("Expected invalid reranker strategy to fail.")
