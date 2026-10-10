@@ -70,4 +70,5 @@ __all__ = [
     "run_benchmark",
     "write_artifacts",
     "write_benchmark_artifacts",
+    "validate_benchmark_baseline",
 ]
