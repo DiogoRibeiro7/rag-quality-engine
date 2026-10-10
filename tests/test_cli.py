@@ -267,3 +267,38 @@ def test_cli_benchmark_compare_shows_per_query_regressions(tmp_path: Path) -> No
     assert result.exit_code == 1
     assert "Per-query Comparison" in result.output
     assert case.query in result.output
+
+
+def test_cli_benchmark_promote_writes_baseline(tmp_path: Path) -> None:
+    output_dir = tmp_path / "evaluation"
+    summary, runs = cli.run_benchmark(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        output_dir=output_dir,
+        runs=1,
+        top_k=2,
+        chunk_size=400,
+        overlap=60,
+        min_faithfulness=0.80,
+        min_citation_support=1.00,
+    )
+    cli.write_benchmark_artifacts(summary, runs, output_dir)
+    baseline_dir = tmp_path / "baseline"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "benchmark-promote",
+            "--summary",
+            str(output_dir / "benchmark-summary.json"),
+            "--cases",
+            str(output_dir / "cases.json"),
+            "--out",
+            str(baseline_dir),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert (baseline_dir / "benchmark-summary.json").exists()
+    assert (baseline_dir / "cases.json").exists()
