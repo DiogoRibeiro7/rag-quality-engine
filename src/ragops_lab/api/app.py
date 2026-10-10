@@ -40,7 +40,6 @@ def health() -> dict[str, str]:
     return {"status": "ok", "version": __version__}
 
 
-
 def _error_response(status_code: int, code: str, message: str) -> JSONResponse:
     return JSONResponse(
         status_code=status_code,
