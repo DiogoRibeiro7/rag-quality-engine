@@ -17,8 +17,8 @@ from .evaluation import (
     load_evaluation_cases,
     promote_benchmark_baseline,
     rebuild_golden_set,
-    validate_benchmark_baseline,
     run_benchmark,
+    validate_benchmark_baseline,
     write_benchmark_artifacts,
 )
 from .generation import GenerationService, build_llm_client
