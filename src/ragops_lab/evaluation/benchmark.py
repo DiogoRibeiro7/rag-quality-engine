@@ -112,6 +112,101 @@ class BenchmarkSummary(BaseModel):
     passed: bool
 
 
+
+class BenchmarkComparison(BaseModel):
+    """Metric deltas between two benchmark summaries."""
+
+    baseline_path: str
+    candidate_path: str
+    fingerprint_match: bool
+    baseline_passed: bool
+    candidate_passed: bool
+    recall_at_k_delta: float
+    mean_reciprocal_rank_delta: float
+    faithfulness_delta: float
+    citation_support_delta: float
+    refusal_accuracy_delta: float
+    p95_latency_ms_delta: float
+    p95_token_estimate_delta: int
+    regressions: list[str] = Field(default_factory=list)
+
+    @property
+    def has_regressions(self) -> bool:
+        """Return whether any monitored metric regressed."""
+        return bool(self.regressions)
+
+
+def load_benchmark_summary(path: Path) -> BenchmarkSummary:
+    """Load one persisted benchmark summary JSON file."""
+    if not path.exists():
+        raise ValueError(f"Benchmark summary not found: {path}")
+    return BenchmarkSummary.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def compare_benchmark_summaries(
+    *,
+    baseline: BenchmarkSummary,
+    candidate: BenchmarkSummary,
+    baseline_path: Path,
+    candidate_path: Path,
+    allow_mismatched_fingerprints: bool = False,
+) -> BenchmarkComparison:
+    """Compare persisted benchmark summaries and classify regressions."""
+    fingerprint_match = baseline.provenance.fingerprint == candidate.provenance.fingerprint
+    if not fingerprint_match and not allow_mismatched_fingerprints:
+        raise ValueError(
+            "Benchmark fingerprints differ. Compare only like-for-like runs or "
+            "set allow_mismatched_fingerprints=True explicitly."
+        )
+
+    recall_delta = candidate.average_recall_at_k - baseline.average_recall_at_k
+    mrr_delta = candidate.mean_reciprocal_rank - baseline.mean_reciprocal_rank
+    faithfulness_delta = candidate.average_faithfulness - baseline.average_faithfulness
+    citation_delta = (
+        candidate.average_citation_support - baseline.average_citation_support
+    )
+    refusal_delta = candidate.average_refusal_accuracy - baseline.average_refusal_accuracy
+    latency_delta = (
+        candidate.worst_run_p95_latency_ms - baseline.worst_run_p95_latency_ms
+    )
+    token_delta = (
+        candidate.worst_run_p95_token_estimate
+        - baseline.worst_run_p95_token_estimate
+    )
+
+    regressions: list[str] = []
+    monitored = {
+        "recall_at_k": recall_delta,
+        "mean_reciprocal_rank": mrr_delta,
+        "faithfulness": faithfulness_delta,
+        "citation_support": citation_delta,
+        "refusal_accuracy": refusal_delta,
+    }
+    regressions.extend(name for name, delta in monitored.items() if delta < 0.0)
+    if latency_delta > 0.0:
+        regressions.append("p95_latency_ms")
+    if token_delta > 0:
+        regressions.append("p95_token_estimate")
+    if baseline.passed and not candidate.passed:
+        regressions.append("passed")
+
+    return BenchmarkComparison(
+        baseline_path=str(baseline_path),
+        candidate_path=str(candidate_path),
+        fingerprint_match=fingerprint_match,
+        baseline_passed=baseline.passed,
+        candidate_passed=candidate.passed,
+        recall_at_k_delta=recall_delta,
+        mean_reciprocal_rank_delta=mrr_delta,
+        faithfulness_delta=faithfulness_delta,
+        citation_support_delta=citation_delta,
+        refusal_accuracy_delta=refusal_delta,
+        p95_latency_ms_delta=latency_delta,
+        p95_token_estimate_delta=token_delta,
+        regressions=regressions,
+    )
+
+
 def _sha256_file(path: Path) -> str:
     """Hash a file's bytes with SHA-256."""
     digest = hashlib.sha256()

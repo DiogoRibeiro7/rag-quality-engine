@@ -242,3 +242,119 @@ def test_benchmark_rejects_invalid_performance_budget(tmp_path: Path) -> None:
             min_citation_support=1.00,
             max_p95_token_estimate=0,
         )
+
+
+def _benchmark_summary_payload(*, fingerprint: str, faithfulness: float = 1.0) -> dict[str, object]:
+    return {
+        "run_count": 1,
+        "case_count": 1,
+        "answerable_case_count": 1,
+        "unanswerable_case_count": 0,
+        "top_k": 2,
+        "average_recall_at_k": 1.0,
+        "mean_reciprocal_rank": 1.0,
+        "average_faithfulness": faithfulness,
+        "lowest_run_faithfulness": faithfulness,
+        "average_citation_support": 1.0,
+        "lowest_run_citation_support": 1.0,
+        "average_refusal_accuracy": 1.0,
+        "lowest_run_refusal_accuracy": 1.0,
+        "min_faithfulness": 0.8,
+        "min_citation_support": 1.0,
+        "min_refusal_accuracy": 1.0,
+        "worst_run_p95_latency_ms": 10.0,
+        "worst_run_p95_token_estimate": 100,
+        "max_p95_latency_ms": None,
+        "max_p95_token_estimate": None,
+        "provenance": {
+            "corpus_sha256": "a" * 64,
+            "golden_sha256": "b" * 64,
+            "refusal_sha256": "c" * 64,
+            "chunking_strategy": "chars",
+            "chunk_size": 400,
+            "overlap": 60,
+            "fingerprint": fingerprint,
+        },
+        "passed": faithfulness >= 0.8,
+    }
+
+
+def test_compare_benchmark_summaries_reports_regressions(tmp_path: Path) -> None:
+    baseline_path = tmp_path / "baseline.json"
+    candidate_path = tmp_path / "candidate.json"
+    baseline_path.write_text(
+        json.dumps(_benchmark_summary_payload(fingerprint="d" * 64)),
+        encoding="utf-8",
+    )
+    candidate_payload = _benchmark_summary_payload(
+        fingerprint="d" * 64,
+        faithfulness=0.7,
+    )
+    candidate_payload["worst_run_p95_latency_ms"] = 12.0
+    candidate_payload["worst_run_p95_token_estimate"] = 120
+    candidate_path.write_text(json.dumps(candidate_payload), encoding="utf-8")
+
+    baseline = evaluate_rag.load_benchmark_summary(baseline_path)
+    candidate = evaluate_rag.load_benchmark_summary(candidate_path)
+    comparison = evaluate_rag.compare_benchmark_summaries(
+        baseline=baseline,
+        candidate=candidate,
+        baseline_path=baseline_path,
+        candidate_path=candidate_path,
+    )
+
+    assert comparison.fingerprint_match is True
+    assert comparison.faithfulness_delta == pytest.approx(-0.3)
+    assert comparison.p95_latency_ms_delta == 2.0
+    assert comparison.p95_token_estimate_delta == 20
+    assert "faithfulness" in comparison.regressions
+    assert "p95_latency_ms" in comparison.regressions
+    assert "p95_token_estimate" in comparison.regressions
+    assert comparison.has_regressions is True
+
+
+def test_compare_benchmark_summaries_rejects_fingerprint_mismatch(tmp_path: Path) -> None:
+    baseline_path = tmp_path / "baseline.json"
+    candidate_path = tmp_path / "candidate.json"
+    baseline_path.write_text(
+        json.dumps(_benchmark_summary_payload(fingerprint="d" * 64)),
+        encoding="utf-8",
+    )
+    candidate_path.write_text(
+        json.dumps(_benchmark_summary_payload(fingerprint="e" * 64)),
+        encoding="utf-8",
+    )
+
+    baseline = evaluate_rag.load_benchmark_summary(baseline_path)
+    candidate = evaluate_rag.load_benchmark_summary(candidate_path)
+
+    with pytest.raises(ValueError, match="fingerprints differ"):
+        evaluate_rag.compare_benchmark_summaries(
+            baseline=baseline,
+            candidate=candidate,
+            baseline_path=baseline_path,
+            candidate_path=candidate_path,
+        )
+
+
+def test_compare_benchmark_summaries_allows_explicit_mismatch(tmp_path: Path) -> None:
+    baseline_path = tmp_path / "baseline.json"
+    candidate_path = tmp_path / "candidate.json"
+    baseline_path.write_text(
+        json.dumps(_benchmark_summary_payload(fingerprint="d" * 64)),
+        encoding="utf-8",
+    )
+    candidate_path.write_text(
+        json.dumps(_benchmark_summary_payload(fingerprint="e" * 64)),
+        encoding="utf-8",
+    )
+
+    comparison = evaluate_rag.compare_benchmark_summaries(
+        baseline=evaluate_rag.load_benchmark_summary(baseline_path),
+        candidate=evaluate_rag.load_benchmark_summary(candidate_path),
+        baseline_path=baseline_path,
+        candidate_path=candidate_path,
+        allow_mismatched_fingerprints=True,
+    )
+
+    assert comparison.fingerprint_match is False

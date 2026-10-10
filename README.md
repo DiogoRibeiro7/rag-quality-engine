@@ -256,6 +256,20 @@ to `artifacts/evaluation`.
 poetry run rag-quality-engine benchmark --runs 3 --source-dir data/sample_documents --golden-path data/golden/qa.json --refusal-path data/golden/refusal.json --out artifacts/evaluation
 ```
 
+Compare two persisted benchmark summaries:
+
+```bash
+poetry run rag-quality-engine benchmark-compare \
+  artifacts/baseline/benchmark-summary.json \
+  artifacts/candidate/benchmark-summary.json
+```
+
+Comparison requires matching benchmark fingerprints by default so corpus/chunking
+changes are not misclassified as model regressions. Use
+`--allow-mismatched-fingerprints` only when that comparison is intentional.
+The command exits non-zero when monitored quality metrics decrease, p95 latency
+or token usage increases, or a previously passing benchmark starts failing.
+
 `make notebook-check` executes the committed notebooks with `nbval` so notebook
 examples stay aligned with the package code.
 
