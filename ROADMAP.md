@@ -69,6 +69,8 @@ The repository includes a working local MVP with:
   classification.
 - Added per-query benchmark comparison to identify the exact golden questions
   responsible for regressions.
+- Added an optional CI benchmark-baseline gate with deliberate, reviewed
+  baseline promotion.
 - Added optional p95 latency and token budget gates to benchmark regression
   checks.
 - Added golden-set rebuild tooling based on stable evidence phrases.
