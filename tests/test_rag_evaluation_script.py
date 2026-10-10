@@ -304,7 +304,7 @@ def test_compare_benchmark_summaries_reports_regressions(tmp_path: Path) -> None
     )
 
     assert comparison.fingerprint_match is True
-    assert comparison.faithfulness_delta == -0.3
+    assert comparison.faithfulness_delta == pytest.approx(-0.3)
     assert comparison.p95_latency_ms_delta == 2.0
     assert comparison.p95_token_estimate_delta == 20
     assert "faithfulness" in comparison.regressions
