@@ -5,7 +5,13 @@ from .hybrid import HybridRetriever
 from .index import LocalVectorIndex
 from .lexical import BM25Retriever
 from .pipeline import apply_profile_reranking, search_with_profile
-from .reranking import LexicalOverlapReranker, Reranker, Retriever, RetrieveThenRerank
+from .reranking import (
+    EmbeddingSimilarityReranker,
+    LexicalOverlapReranker,
+    Reranker,
+    Retriever,
+    RetrieveThenRerank,
+)
 from .tokenizer import tokenize
 from .vector import (
     EmbeddingClient,
@@ -30,6 +36,7 @@ __all__ = [
     "Retriever",
     "Reranker",
     "LexicalOverlapReranker",
+    "EmbeddingSimilarityReranker",
     "RetrieveThenRerank",
     "RetrievalGoldenExample",
     "RetrievalEvaluationReport",

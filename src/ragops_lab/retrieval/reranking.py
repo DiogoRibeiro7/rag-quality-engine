@@ -7,6 +7,7 @@ from typing import Protocol
 from ragops_lab.domain import RetrievalResult
 
 from .tokenizer import tokenize
+from .vector import EmbeddingClient, cosine_similarity
 
 
 class Retriever(Protocol):
@@ -72,6 +73,52 @@ class LexicalOverlapReranker:
                 rank=rank,
                 retrieval_method=f"reranked-{candidate.retrieval_method}",
                 matched_terms=sorted(set(tokenize(query)) & set(tokenize(candidate.chunk.text))),
+            )
+            for rank, (candidate, score) in enumerate(scored[:top_k], start=1)
+        ]
+
+
+class EmbeddingSimilarityReranker:
+    """Semantic reranker backed by embedding similarity."""
+
+    def __init__(self, embedding_client: EmbeddingClient) -> None:
+        self.embedding_client = embedding_client
+
+    def rerank(
+        self,
+        query: str,
+        candidates: list[RetrievalResult],
+        *,
+        top_k: int,
+    ) -> list[RetrievalResult]:
+        """Rerank candidates by semantic similarity to the query."""
+        if top_k <= 0:
+            raise ValueError("top_k must be positive.")
+        if not candidates:
+            return []
+
+        texts = [query, *[candidate.chunk.text for candidate in candidates]]
+        vectors = self.embedding_client.embed_texts(texts)
+        query_vector = vectors[0]
+        scored = [
+            (candidate, cosine_similarity(query_vector, vector))
+            for candidate, vector in zip(candidates, vectors[1:], strict=True)
+        ]
+        scored.sort(
+            key=lambda item: (
+                -item[1],
+                -item[0].score,
+                item[0].rank,
+                item[0].chunk.chunk_id,
+            )
+        )
+        return [
+            RetrievalResult(
+                chunk=candidate.chunk,
+                score=score,
+                rank=rank,
+                retrieval_method=f"reranked-{candidate.retrieval_method}",
+                matched_terms=[],
             )
             for rank, (candidate, score) in enumerate(scored[:top_k], start=1)
         ]

@@ -190,11 +190,14 @@ and `limit` filters for local debugging and demo review.
 Retrieval behavior is configured through named profiles rather than hard-coded
 runtime branches. The built-in profiles are `lexical`, `vector`, and `hybrid`;
 requests can override `top_k`, `mode`, `lexical_weight`, `vector_weight`,
-`fusion_strategy`, `rrf_k`, `rerank`, and `rerank_candidate_multiplier` when needed. Hybrid retrieval supports the
+`fusion_strategy`, `rrf_k`, `rerank`, `reranker_strategy`, and
+`rerank_candidate_multiplier` when needed. Hybrid retrieval supports the
 backwards-compatible weighted score fusion and Reciprocal Rank Fusion (`rrf`),
 which combines rank positions without requiring lexical and vector scores to be
-on comparable scales. Reranking can be enabled for any retrieval mode; it widens
-the candidate pool and applies the deterministic offline reranker before the final top-k.
+on comparable scales. Reranking can be enabled for any retrieval mode. The default `lexical`
+reranker is deterministic and offline; `reranker_strategy=embedding` uses the
+configured embedding provider for semantic second-stage scoring before the final
+top-k.
 
 ## Project structure
 

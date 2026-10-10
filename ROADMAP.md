@@ -73,6 +73,8 @@ The repository includes a working local MVP with:
 - Added token-aware chunking with token-count overlap and exact source offsets.
 - Added opt-in embedding-backed semantic judges for answer relevance and
   claim-level support.
+- Added configurable embedding-backed semantic reranking while retaining the
+  lexical reranker as the default.
 - Added trace-dashboard KPIs, quality-state columns, and attention highlighting
   for weak traces.
 - Modernized the API container, added a health endpoint, and documented local
@@ -131,9 +133,9 @@ fixed before the behaviours they affect are relied on.
 
 ## Planned features
 
-- **Reranking stage.** The `Reranker` protocol and retrieve-then-rerank path are
-  now implemented with a deterministic offline lexical reranker. A provider-backed
-  cross-encoder remains a future extension for semantic second-stage scoring.
+- **Reranking stage.** Completed: retrieve-then-rerank supports both the
+  deterministic lexical reranker and an embedding-backed semantic reranker behind
+  the same `Reranker` protocol.
 - **Reciprocal Rank Fusion.** Completed: `HybridRetriever` now supports RRF as
   an alternative to weighted score fusion, removing the need to calibrate raw
   lexical and vector score scales.

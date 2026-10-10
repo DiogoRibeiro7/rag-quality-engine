@@ -20,6 +20,7 @@ from .generation import GenerationService, build_llm_client
 from .ingestion import ChunkingConfig, ingest_directory, load_chunks_jsonl
 from .retrieval import (
     BM25Retriever,
+    EmbeddingClient,
     HybridRetriever,
     LocalVectorIndex,
     Retriever,
@@ -111,6 +112,7 @@ def ask(
     fusion_strategy: str | None = None,
     rrf_k: int | None = None,
     rerank: bool | None = None,
+    reranker_strategy: str | None = None,
     rerank_candidate_multiplier: int | None = None,
 ) -> None:
     """Ask a grounded question over ingested chunks."""
@@ -125,6 +127,7 @@ def ask(
             fusion_strategy=fusion_strategy,
             rrf_k=rrf_k,
             rerank=rerank,
+            reranker_strategy=reranker_strategy,
             rerank_candidate_multiplier=rerank_candidate_multiplier,
         )
     except ValueError as exc:
@@ -153,7 +156,18 @@ def ask(
             fusion_strategy=retrieval.fusion_strategy,
             rrf_k=retrieval.rrf_k,
         )
-    results = search_with_profile(retriever, retrieval, question)
+    embedding_client: EmbeddingClient | None = None
+    if retrieval.rerank and retrieval.reranker_strategy == "embedding":
+        try:
+            embedding_client = build_embedding_client(settings.embeddings)
+        except (RuntimeError, ValueError) as exc:
+            _fail(str(exc))
+    results = search_with_profile(
+        retriever,
+        retrieval,
+        question,
+        embedding_client=embedding_client,
+    )
     try:
         llm_client, model_name = build_llm_client(settings.llm)
     except (RuntimeError, ValueError) as exc:

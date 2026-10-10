@@ -454,3 +454,35 @@ def test_api_ingest_supports_token_strategy(tmp_path: Path) -> None:
     assert response.status_code == 200
     chunks = load_chunks_jsonl(chunks_path)
     assert [chunk.token_count for chunk in chunks] == [3, 3]
+
+
+def test_api_search_can_enable_embedding_reranking(tmp_path: Path) -> None:
+    client = TestClient(app)
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    (raw_dir / "apollo.txt").write_text(
+        "Apollo 11 landed on the Moon in 1969.",
+        encoding="utf-8",
+    )
+    (raw_dir / "metrics.txt").write_text(
+        "Citation support measures evidence quality.",
+        encoding="utf-8",
+    )
+    chunks_path = tmp_path / "chunks.jsonl"
+    ingest_directory(raw_dir, chunks_path, ChunkingConfig(chunk_size=120, overlap=10))
+
+    response = client.post(
+        "/search",
+        json={
+            "query": "moon mission",
+            "chunks_path": str(chunks_path),
+            "profile": "lexical",
+            "top_k": 1,
+            "rerank": True,
+            "reranker_strategy": "embedding",
+            "rerank_candidate_multiplier": 2,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()[0]["retrieval_method"] == "reranked-lexical"
