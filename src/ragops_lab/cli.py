@@ -14,6 +14,7 @@ from .evaluation import (
     compare_benchmark_summaries,
     evaluate_answer,
     load_benchmark_summary,
+    load_evaluation_cases,
     rebuild_golden_set,
     run_benchmark,
     write_benchmark_artifacts,
@@ -218,18 +219,28 @@ def golden_rebuild(
 def benchmark_compare(
     baseline: Path,
     candidate: Path,
+    baseline_cases: Path | None = None,
+    candidate_cases: Path | None = None,
     allow_mismatched_fingerprints: bool = False,
 ) -> None:
     """Compare two persisted benchmark summaries."""
     try:
         baseline_summary = load_benchmark_summary(baseline)
         candidate_summary = load_benchmark_summary(candidate)
+        loaded_baseline_cases = (
+            load_evaluation_cases(baseline_cases) if baseline_cases is not None else None
+        )
+        loaded_candidate_cases = (
+            load_evaluation_cases(candidate_cases) if candidate_cases is not None else None
+        )
         comparison = compare_benchmark_summaries(
             baseline=baseline_summary,
             candidate=candidate_summary,
             baseline_path=baseline,
             candidate_path=candidate,
             allow_mismatched_fingerprints=allow_mismatched_fingerprints,
+            baseline_cases=loaded_baseline_cases,
+            candidate_cases=loaded_candidate_cases,
         )
     except ValueError as exc:
         _fail(str(exc))
@@ -253,6 +264,18 @@ def benchmark_compare(
         ", ".join(comparison.regressions) or "none",
     )
     console.print(table)
+    if comparison.case_comparisons:
+        case_table = Table(title="Per-query Comparison")
+        case_table.add_column("Query")
+        case_table.add_column("Status")
+        case_table.add_column("Regressions")
+        for case in comparison.case_comparisons:
+            case_table.add_row(
+                case.query,
+                case.status,
+                ", ".join(case.regressions) or "none",
+            )
+        console.print(case_table)
     if comparison.has_regressions:
         raise typer.Exit(1)
 
