@@ -20,6 +20,7 @@ from ragops_lab.generation import GenerationService, build_llm_client
 from ragops_lab.ingestion import ChunkingConfig, ingest_directory, load_chunks_jsonl
 from ragops_lab.retrieval import (
     BM25Retriever,
+    EmbeddingClient,
     HybridRetriever,
     LocalVectorIndex,
     Retriever,
@@ -277,7 +278,7 @@ def _search(request: SearchRequest) -> list[RetrievalResult]:
         )
     else:
         raise HTTPException(status_code=400, detail=f"Unsupported retrieval mode: {profile.mode}")
-    embedding_client = None
+    embedding_client: EmbeddingClient | None = None
     if profile.rerank and profile.reranker_strategy == "embedding":
         embedding_client = build_embedding_client(SETTINGS.embeddings)
     return search_with_profile(
