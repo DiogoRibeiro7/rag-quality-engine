@@ -73,6 +73,7 @@ The repository includes a working local MVP with:
   baseline promotion.
 - Added baseline manifest metadata so approved benchmarks record project version,
   Git commit, promotion time, and benchmark fingerprint.
+- Added baseline integrity validation before CI regression comparison.
 - Added optional p95 latency and token budget gates to benchmark regression
   checks.
 - Added golden-set rebuild tooling based on stable evidence phrases.
