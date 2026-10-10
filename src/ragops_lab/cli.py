@@ -17,6 +17,7 @@ from .evaluation import (
     load_evaluation_cases,
     promote_benchmark_baseline,
     rebuild_golden_set,
+    validate_benchmark_baseline,
     run_benchmark,
     write_benchmark_artifacts,
 )
@@ -214,6 +215,24 @@ def golden_rebuild(
     except ValueError as exc:
         _fail(str(exc))
     console.print({"examples_written": len(examples), "out": str(out)})
+
+
+@app.command("benchmark-baseline-validate")
+def benchmark_baseline_validate(
+    summary: Path = Path("benchmarks/baseline/benchmark-summary.json"),
+    cases: Path = Path("benchmarks/baseline/cases.json"),
+    manifest: Path = Path("benchmarks/baseline/manifest.json"),
+) -> None:
+    """Validate integrity of the promoted benchmark baseline."""
+    try:
+        validation = validate_benchmark_baseline(
+            summary_path=summary,
+            cases_path=cases,
+            manifest_path=manifest,
+        )
+    except ValueError as exc:
+        _fail(str(exc))
+    console.print(validation.model_dump())
 
 
 @app.command("benchmark-promote")
