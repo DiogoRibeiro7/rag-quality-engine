@@ -213,3 +213,57 @@ def test_cli_benchmark_compare_exits_on_regression(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     assert "faithfulness" in result.output
+
+
+def test_cli_benchmark_compare_shows_per_query_regressions(tmp_path: Path) -> None:
+    output_dir = tmp_path / "benchmark"
+    summary, runs = cli.run_benchmark(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        output_dir=output_dir,
+        runs=1,
+        top_k=2,
+        chunk_size=400,
+        overlap=60,
+        min_faithfulness=0.80,
+        min_citation_support=1.00,
+    )
+
+    baseline_summary = tmp_path / "baseline-summary.json"
+    candidate_summary = tmp_path / "candidate-summary.json"
+    baseline_cases = tmp_path / "baseline-cases.json"
+    candidate_cases = tmp_path / "candidate-cases.json"
+
+    baseline_summary.write_text(summary.model_dump_json(indent=2), encoding="utf-8")
+    candidate_summary.write_text(summary.model_dump_json(indent=2), encoding="utf-8")
+
+    case = runs[0].cases[0]
+    regressed = case.model_copy(
+        update={"recall_at_k": max(0.0, case.recall_at_k - 0.5)}
+    )
+    baseline_cases.write_text(
+        json.dumps([case.model_dump(mode="json")]),
+        encoding="utf-8",
+    )
+    candidate_cases.write_text(
+        json.dumps([regressed.model_dump(mode="json")]),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "benchmark-compare",
+            str(baseline_summary),
+            str(candidate_summary),
+            "--baseline-cases",
+            str(baseline_cases),
+            "--candidate-cases",
+            str(candidate_cases),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "Per-query Comparison" in result.output
+    assert case.query in result.output

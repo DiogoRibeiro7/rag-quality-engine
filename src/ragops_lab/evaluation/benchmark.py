@@ -113,6 +113,25 @@ class BenchmarkSummary(BaseModel):
 
 
 
+class BenchmarkCaseComparison(BaseModel):
+    """Per-query benchmark deltas between baseline and candidate cases."""
+
+    query: str
+    status: str
+    recall_at_k_delta: float = 0.0
+    reciprocal_rank_delta: float = 0.0
+    faithfulness_delta: float = 0.0
+    citation_support_delta: float = 0.0
+    latency_ms_delta: float = 0.0
+    token_estimate_delta: int = 0
+    regressions: list[str] = Field(default_factory=list)
+
+    @property
+    def has_regressions(self) -> bool:
+        """Return whether this query has any metric regressions."""
+        return bool(self.regressions)
+
+
 class BenchmarkComparison(BaseModel):
     """Metric deltas between two benchmark summaries."""
 
@@ -129,11 +148,88 @@ class BenchmarkComparison(BaseModel):
     p95_latency_ms_delta: float
     p95_token_estimate_delta: int
     regressions: list[str] = Field(default_factory=list)
+    case_comparisons: list[BenchmarkCaseComparison] = Field(default_factory=list)
 
     @property
     def has_regressions(self) -> bool:
         """Return whether any monitored metric regressed."""
         return bool(self.regressions)
+
+
+def load_evaluation_cases(path: Path) -> list[EvaluationCase]:
+    """Load persisted benchmark case results."""
+    if not path.exists():
+        raise ValueError(f"Benchmark cases not found: {path}")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return [EvaluationCase.model_validate(item) for item in payload]
+
+
+def compare_evaluation_cases(
+    baseline_cases: list[EvaluationCase],
+    candidate_cases: list[EvaluationCase],
+) -> list[BenchmarkCaseComparison]:
+    """Compare benchmark cases aligned by query."""
+    baseline_by_query = {case.query: case for case in baseline_cases}
+    candidate_by_query = {case.query: case for case in candidate_cases}
+    queries = sorted(set(baseline_by_query) | set(candidate_by_query))
+    comparisons: list[BenchmarkCaseComparison] = []
+
+    for query in queries:
+        baseline_case = baseline_by_query.get(query)
+        candidate_case = candidate_by_query.get(query)
+        if baseline_case is None:
+            comparisons.append(BenchmarkCaseComparison(query=query, status="added"))
+            continue
+        if candidate_case is None:
+            comparisons.append(
+                BenchmarkCaseComparison(
+                    query=query,
+                    status="missing",
+                    regressions=["missing_query"],
+                )
+            )
+            continue
+
+        recall_delta = candidate_case.recall_at_k - baseline_case.recall_at_k
+        rank_delta = candidate_case.reciprocal_rank - baseline_case.reciprocal_rank
+        faithfulness_delta = (
+            candidate_case.evaluation.faithfulness
+            - baseline_case.evaluation.faithfulness
+        )
+        citation_delta = (
+            candidate_case.evaluation.citation_support
+            - baseline_case.evaluation.citation_support
+        )
+        latency_delta = candidate_case.latency_ms - baseline_case.latency_ms
+        token_delta = candidate_case.token_estimate - baseline_case.token_estimate
+
+        regressions: list[str] = []
+        monitored = {
+            "recall_at_k": recall_delta,
+            "reciprocal_rank": rank_delta,
+            "faithfulness": faithfulness_delta,
+            "citation_support": citation_delta,
+        }
+        regressions.extend(name for name, delta in monitored.items() if delta < 0.0)
+        if latency_delta > 0.0:
+            regressions.append("latency_ms")
+        if token_delta > 0:
+            regressions.append("token_estimate")
+
+        comparisons.append(
+            BenchmarkCaseComparison(
+                query=query,
+                status="matched",
+                recall_at_k_delta=recall_delta,
+                reciprocal_rank_delta=rank_delta,
+                faithfulness_delta=faithfulness_delta,
+                citation_support_delta=citation_delta,
+                latency_ms_delta=latency_delta,
+                token_estimate_delta=token_delta,
+                regressions=regressions,
+            )
+        )
+    return comparisons
 
 
 def load_benchmark_summary(path: Path) -> BenchmarkSummary:
@@ -150,6 +246,8 @@ def compare_benchmark_summaries(
     baseline_path: Path,
     candidate_path: Path,
     allow_mismatched_fingerprints: bool = False,
+    baseline_cases: list[EvaluationCase] | None = None,
+    candidate_cases: list[EvaluationCase] | None = None,
 ) -> BenchmarkComparison:
     """Compare persisted benchmark summaries and classify regressions."""
     fingerprint_match = baseline.provenance.fingerprint == candidate.provenance.fingerprint
@@ -190,6 +288,19 @@ def compare_benchmark_summaries(
     if baseline.passed and not candidate.passed:
         regressions.append("passed")
 
+    case_comparisons: list[BenchmarkCaseComparison] = []
+    if baseline_cases is not None or candidate_cases is not None:
+        if baseline_cases is None or candidate_cases is None:
+            raise ValueError(
+                "Both baseline_cases and candidate_cases are required for case comparison."
+            )
+        case_comparisons = compare_evaluation_cases(baseline_cases, candidate_cases)
+        regressions.extend(
+            f"query:{comparison.query}"
+            for comparison in case_comparisons
+            if comparison.has_regressions
+        )
+
     return BenchmarkComparison(
         baseline_path=str(baseline_path),
         candidate_path=str(candidate_path),
@@ -204,6 +315,7 @@ def compare_benchmark_summaries(
         p95_latency_ms_delta=latency_delta,
         p95_token_estimate_delta=token_delta,
         regressions=regressions,
+        case_comparisons=case_comparisons,
     )
 
 

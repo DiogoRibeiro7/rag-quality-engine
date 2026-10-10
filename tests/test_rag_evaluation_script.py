@@ -358,3 +358,107 @@ def test_compare_benchmark_summaries_allows_explicit_mismatch(tmp_path: Path) ->
     )
 
     assert comparison.fingerprint_match is False
+
+
+def test_compare_evaluation_cases_identifies_regressed_query(tmp_path: Path) -> None:
+    _, cases = evaluate_rag.run_evaluation(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        chunks_path=tmp_path / "chunks.jsonl",
+        top_k=2,
+        chunk_size=400,
+        overlap=60,
+        min_faithfulness=0.80,
+        min_citation_support=1.00,
+    )
+    baseline_case = cases[0]
+    candidate_case = baseline_case.model_copy(
+        update={
+            "recall_at_k": max(0.0, baseline_case.recall_at_k - 0.5),
+            "latency_ms": baseline_case.latency_ms + 10.0,
+            "token_estimate": baseline_case.token_estimate + 5,
+            "evaluation": baseline_case.evaluation.model_copy(
+                update={
+                    "faithfulness": max(
+                        0.0,
+                        baseline_case.evaluation.faithfulness - 0.5,
+                    )
+                }
+            ),
+        }
+    )
+
+    comparisons = evaluate_rag.compare_evaluation_cases(
+        [baseline_case],
+        [candidate_case],
+    )
+
+    assert len(comparisons) == 1
+    comparison = comparisons[0]
+    assert comparison.query == baseline_case.query
+    assert comparison.status == "matched"
+    assert "recall_at_k" in comparison.regressions
+    assert "faithfulness" in comparison.regressions
+    assert "latency_ms" in comparison.regressions
+    assert "token_estimate" in comparison.regressions
+
+
+def test_compare_evaluation_cases_reports_added_and_missing_queries(
+    tmp_path: Path,
+) -> None:
+    _, cases = evaluate_rag.run_evaluation(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        chunks_path=tmp_path / "chunks.jsonl",
+        top_k=2,
+        chunk_size=400,
+        overlap=60,
+        min_faithfulness=0.80,
+        min_citation_support=1.00,
+    )
+    baseline_case = cases[0]
+    added_case = cases[1].model_copy(update={"query": "A newly added query?"})
+
+    comparisons = evaluate_rag.compare_evaluation_cases(
+        [baseline_case],
+        [added_case],
+    )
+    by_status = {comparison.status: comparison for comparison in comparisons}
+
+    assert by_status["missing"].query == baseline_case.query
+    assert by_status["missing"].regressions == ["missing_query"]
+    assert by_status["added"].query == "A newly added query?"
+
+
+def test_summary_comparison_can_include_case_regressions(tmp_path: Path) -> None:
+    output_dir = tmp_path / "benchmark"
+    summary, runs = evaluate_rag.run_benchmark(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        output_dir=output_dir,
+        runs=1,
+        top_k=2,
+        chunk_size=400,
+        overlap=60,
+        min_faithfulness=0.80,
+        min_citation_support=1.00,
+    )
+    baseline_case = runs[0].cases[0]
+    candidate_case = baseline_case.model_copy(
+        update={"recall_at_k": max(0.0, baseline_case.recall_at_k - 0.5)}
+    )
+
+    comparison = evaluate_rag.compare_benchmark_summaries(
+        baseline=summary,
+        candidate=summary,
+        baseline_path=tmp_path / "baseline.json",
+        candidate_path=tmp_path / "candidate.json",
+        baseline_cases=[baseline_case],
+        candidate_cases=[candidate_case],
+    )
+
+    assert comparison.case_comparisons
+    assert any(item.startswith("query:") for item in comparison.regressions)

@@ -67,6 +67,8 @@ The repository includes a working local MVP with:
   fixtures, and chunking configuration.
 - Added benchmark comparison tooling with provenance checks and regression
   classification.
+- Added per-query benchmark comparison to identify the exact golden questions
+  responsible for regressions.
 - Added optional p95 latency and token budget gates to benchmark regression
   checks.
 - Added golden-set rebuild tooling based on stable evidence phrases.

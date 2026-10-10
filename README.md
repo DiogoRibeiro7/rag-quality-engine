@@ -264,6 +264,21 @@ poetry run rag-quality-engine benchmark-compare \
   artifacts/candidate/benchmark-summary.json
 ```
 
+To identify the exact queries responsible for a regression, include the
+corresponding case artifacts:
+
+```bash
+poetry run rag-quality-engine benchmark-compare \
+  artifacts/baseline/benchmark-summary.json \
+  artifacts/candidate/benchmark-summary.json \
+  --baseline-cases artifacts/baseline/cases.json \
+  --candidate-cases artifacts/candidate/cases.json
+```
+
+Per-query comparison aligns cases by query and reports changes in Recall@k,
+reciprocal rank, faithfulness, citation support, latency, and token usage. Added
+and missing queries are surfaced explicitly.
+
 Comparison requires matching benchmark fingerprints by default so corpus/chunking
 changes are not misclassified as model regressions. Use
 `--allow-mismatched-fingerprints` only when that comparison is intentional.
