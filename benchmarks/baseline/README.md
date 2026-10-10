@@ -43,7 +43,16 @@ auto-promotes the baseline.
 
 ## Comparison Semantics
 
-The comparison uses:
+Validate the committed baseline directly with:
+
+```bash
+poetry run rag-quality-engine benchmark-baseline-validate
+```
+
+The command verifies that the summary, cases, and manifest agree on fingerprint,
+case count, and query identity.
+
+The CI comparison uses:
 
 ```bash
 make benchmark-baseline-check
@@ -52,7 +61,7 @@ make benchmark-baseline-check
 When `manifest.json` is present, the gate prints it before comparison so CI
 logs identify the approved baseline version and commit.
 
-The gate:
+The gate first validates baseline integrity, then:
 
 - requires matching benchmark provenance fingerprints;
 - compares aggregate quality and performance metrics;
