@@ -7,6 +7,7 @@ from pathlib import Path
 
 from ragops_lab.evaluation.benchmark import (
     BenchmarkBaselineManifest,
+    BenchmarkBaselineValidation,
     BenchmarkCaseComparison,
     BenchmarkComparison,
     BenchmarkProvenance,
@@ -23,6 +24,7 @@ from ragops_lab.evaluation.benchmark import (
     load_golden_examples,
     promote_benchmark_baseline,
     run_benchmark,
+    validate_benchmark_baseline,
     run_evaluation,
     write_artifacts,
     write_benchmark_artifacts,
@@ -30,6 +32,7 @@ from ragops_lab.evaluation.benchmark import (
 
 __all__ = [
     "BenchmarkBaselineManifest",
+    "BenchmarkBaselineValidation",
     "BenchmarkCaseComparison",
     "BenchmarkComparison",
     "BenchmarkProvenance",
@@ -45,6 +48,7 @@ __all__ = [
     "load_evaluation_cases",
     "load_golden_examples",
     "promote_benchmark_baseline",
+    "validate_benchmark_baseline",
     "parse_args",
     "run_benchmark",
     "run_evaluation",
