@@ -285,9 +285,9 @@ changes are not misclassified as model regressions. Use
 The command exits non-zero when monitored quality metrics decrease, p95 latency
 or token usage increases, or a previously passing benchmark starts failing.
 
-For CI, `make benchmark-baseline-check` performs the same summary + per-query
-comparison when `benchmarks/baseline/benchmark-summary.json` and
-`benchmarks/baseline/cases.json` are committed. After reviewing a fresh
+For CI, `make benchmark-baseline-check` first validates the committed summary,
+cases, and manifest with `benchmark-baseline-validate`, then performs the same
+summary + per-query comparison when an approved baseline is present. After reviewing a fresh
 evaluation, `poetry run rag-quality-engine benchmark-promote` validates and
 writes those canonical baseline files plus a `manifest.json` recording the
 project version, Git commit, promotion timestamp, and benchmark fingerprint. If no approved baseline is
