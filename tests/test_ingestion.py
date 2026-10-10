@@ -216,7 +216,7 @@ def test_token_chunking_preserves_overlap_and_punctuation() -> None:
 
 
 def test_token_chunking_empty_input_returns_no_chunks() -> None:
-    document = Document(document_id="doc", title="Doc", text="   ")
+    document = Document(document_id="doc", title="Doc", text="... !!! ???")
 
     chunks = chunk_document(
         document,
