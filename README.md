@@ -285,6 +285,13 @@ changes are not misclassified as model regressions. Use
 The command exits non-zero when monitored quality metrics decrease, p95 latency
 or token usage increases, or a previously passing benchmark starts failing.
 
+For CI, `make benchmark-baseline-check` performs the same summary + per-query
+comparison when `benchmarks/baseline/benchmark-summary.json` and
+`benchmarks/baseline/cases.json` are committed. If no approved baseline is
+present, the check is skipped. See
+[`benchmarks/baseline/README.md`](benchmarks/baseline/README.md) for the
+deliberate baseline-promotion workflow.
+
 `make notebook-check` executes the committed notebooks with `nbval` so notebook
 examples stay aligned with the package code.
 
