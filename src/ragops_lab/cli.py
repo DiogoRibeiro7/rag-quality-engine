@@ -224,7 +224,7 @@ def benchmark_promote(
 ) -> None:
     """Promote reviewed benchmark artifacts into the CI baseline."""
     try:
-        summary_out, cases_out = promote_benchmark_baseline(
+        summary_out, cases_out, manifest_out = promote_benchmark_baseline(
             summary_path=summary,
             cases_path=cases,
             output_dir=out,
@@ -235,6 +235,7 @@ def benchmark_promote(
         {
             "summary": str(summary_out),
             "cases": str(cases_out),
+            "manifest": str(manifest_out),
         }
     )
 
