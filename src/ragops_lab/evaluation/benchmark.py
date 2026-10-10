@@ -125,6 +125,18 @@ class BenchmarkBaselineManifest(BaseModel):
     benchmark_fingerprint: str = Field(min_length=64, max_length=64)
 
 
+class BenchmarkBaselineValidation(BaseModel):
+    """Validation result for one promoted benchmark baseline."""
+
+    valid: bool
+    summary_path: str
+    cases_path: str
+    manifest_path: str
+    benchmark_fingerprint: str
+    case_count: int
+    query_count: int
+
+
 class BenchmarkCaseComparison(BaseModel):
     """Per-query benchmark deltas between baseline and candidate cases."""
 
@@ -271,6 +283,42 @@ def load_benchmark_baseline_manifest(path: Path) -> BenchmarkBaselineManifest:
         raise ValueError(f"Benchmark baseline manifest not found: {path}")
     return BenchmarkBaselineManifest.model_validate_json(
         path.read_text(encoding="utf-8")
+    )
+
+
+def validate_benchmark_baseline(
+    *,
+    summary_path: Path,
+    cases_path: Path,
+    manifest_path: Path,
+) -> BenchmarkBaselineValidation:
+    """Validate consistency across promoted baseline artifacts."""
+    summary = load_benchmark_summary(summary_path)
+    cases = load_evaluation_cases(cases_path)
+    manifest = load_benchmark_baseline_manifest(manifest_path)
+
+    if manifest.benchmark_fingerprint != summary.provenance.fingerprint:
+        raise ValueError(
+            "Baseline manifest fingerprint does not match benchmark summary."
+        )
+    if len(cases) != summary.case_count:
+        raise ValueError(
+            "Case count does not match benchmark summary: "
+            f"{len(cases)} != {summary.case_count}."
+        )
+
+    queries = [case.query for case in cases]
+    if len(set(queries)) != len(queries):
+        raise ValueError("Benchmark cases must contain unique queries.")
+
+    return BenchmarkBaselineValidation(
+        valid=True,
+        summary_path=str(summary_path),
+        cases_path=str(cases_path),
+        manifest_path=str(manifest_path),
+        benchmark_fingerprint=summary.provenance.fingerprint,
+        case_count=summary.case_count,
+        query_count=len(queries),
     )
 
 

@@ -2,6 +2,7 @@
 
 from .benchmark import (
     BenchmarkBaselineManifest,
+    BenchmarkBaselineValidation,
     BenchmarkCaseComparison,
     BenchmarkComparison,
     BenchmarkProvenance,
@@ -19,6 +20,7 @@ from .benchmark import (
     promote_benchmark_baseline,
     run_benchmark,
     run_evaluation,
+    validate_benchmark_baseline,
     write_artifacts,
     write_benchmark_artifacts,
 )
@@ -50,6 +52,7 @@ __all__ = [
     "EvaluationCase",
     "EvaluationSummary",
     "BenchmarkBaselineManifest",
+    "BenchmarkBaselineValidation",
     "BenchmarkCaseComparison",
     "BenchmarkComparison",
     "BenchmarkProvenance",
@@ -67,4 +70,5 @@ __all__ = [
     "run_benchmark",
     "write_artifacts",
     "write_benchmark_artifacts",
+    "validate_benchmark_baseline",
 ]

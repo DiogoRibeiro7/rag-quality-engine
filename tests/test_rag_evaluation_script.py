@@ -553,3 +553,108 @@ def test_promote_benchmark_baseline_rejects_case_count_mismatch(tmp_path: Path) 
             cases_path=output_dir / "cases.json",
             output_dir=tmp_path / "baseline",
         )
+
+
+def test_validate_benchmark_baseline_accepts_consistent_artifacts(tmp_path: Path) -> None:
+    output_dir = tmp_path / "evaluation"
+    summary, runs = evaluate_rag.run_benchmark(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        output_dir=output_dir,
+        runs=1,
+        top_k=2,
+        chunk_size=400,
+        overlap=60,
+        min_faithfulness=0.80,
+        min_citation_support=1.00,
+    )
+    evaluate_rag.write_benchmark_artifacts(summary, runs, output_dir)
+    baseline_dir = tmp_path / "baseline"
+    evaluate_rag.promote_benchmark_baseline(
+        summary_path=output_dir / "benchmark-summary.json",
+        cases_path=output_dir / "cases.json",
+        output_dir=baseline_dir,
+        git_commit="abc123",
+    )
+
+    validation = evaluate_rag.validate_benchmark_baseline(
+        summary_path=baseline_dir / "benchmark-summary.json",
+        cases_path=baseline_dir / "cases.json",
+        manifest_path=baseline_dir / "manifest.json",
+    )
+
+    assert validation.valid is True
+    assert validation.benchmark_fingerprint == summary.provenance.fingerprint
+    assert validation.case_count == summary.case_count
+
+
+def test_validate_benchmark_baseline_rejects_manifest_fingerprint_mismatch(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "evaluation"
+    summary, runs = evaluate_rag.run_benchmark(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        output_dir=output_dir,
+        runs=1,
+        top_k=2,
+        chunk_size=400,
+        overlap=60,
+        min_faithfulness=0.80,
+        min_citation_support=1.00,
+    )
+    evaluate_rag.write_benchmark_artifacts(summary, runs, output_dir)
+    baseline_dir = tmp_path / "baseline"
+    _, _, manifest_path = evaluate_rag.promote_benchmark_baseline(
+        summary_path=output_dir / "benchmark-summary.json",
+        cases_path=output_dir / "cases.json",
+        output_dir=baseline_dir,
+        git_commit="abc123",
+    )
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["benchmark_fingerprint"] = "f" * 64
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="fingerprint does not match"):
+        evaluate_rag.validate_benchmark_baseline(
+            summary_path=baseline_dir / "benchmark-summary.json",
+            cases_path=baseline_dir / "cases.json",
+            manifest_path=manifest_path,
+        )
+
+
+def test_validate_benchmark_baseline_rejects_duplicate_queries(tmp_path: Path) -> None:
+    output_dir = tmp_path / "evaluation"
+    summary, runs = evaluate_rag.run_benchmark(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        output_dir=output_dir,
+        runs=1,
+        top_k=2,
+        chunk_size=400,
+        overlap=60,
+        min_faithfulness=0.80,
+        min_citation_support=1.00,
+    )
+    evaluate_rag.write_benchmark_artifacts(summary, runs, output_dir)
+    baseline_dir = tmp_path / "baseline"
+    evaluate_rag.promote_benchmark_baseline(
+        summary_path=output_dir / "benchmark-summary.json",
+        cases_path=output_dir / "cases.json",
+        output_dir=baseline_dir,
+        git_commit="abc123",
+    )
+
+    cases = json.loads((baseline_dir / "cases.json").read_text(encoding="utf-8"))
+    cases[1]["query"] = cases[0]["query"]
+    (baseline_dir / "cases.json").write_text(json.dumps(cases), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="unique queries"):
+        evaluate_rag.validate_benchmark_baseline(
+            summary_path=baseline_dir / "benchmark-summary.json",
+            cases_path=baseline_dir / "cases.json",
+            manifest_path=baseline_dir / "manifest.json",
+        )
