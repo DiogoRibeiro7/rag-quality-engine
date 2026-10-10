@@ -162,3 +162,54 @@ def test_cli_runs_dataset_benchmark(tmp_path: Path) -> None:
     assert (output_dir / "benchmark-runs.csv").exists()
     assert (output_dir / "run-001" / "cases.json").exists()
     assert (output_dir / "run-002" / "summary.md").exists()
+
+
+def test_cli_benchmark_compare_exits_on_regression(tmp_path: Path) -> None:
+    baseline_path = tmp_path / "baseline.json"
+    candidate_path = tmp_path / "candidate.json"
+    payload = {
+        "run_count": 1,
+        "case_count": 1,
+        "answerable_case_count": 1,
+        "unanswerable_case_count": 0,
+        "top_k": 2,
+        "average_recall_at_k": 1.0,
+        "mean_reciprocal_rank": 1.0,
+        "average_faithfulness": 1.0,
+        "lowest_run_faithfulness": 1.0,
+        "average_citation_support": 1.0,
+        "lowest_run_citation_support": 1.0,
+        "average_refusal_accuracy": 1.0,
+        "lowest_run_refusal_accuracy": 1.0,
+        "min_faithfulness": 0.8,
+        "min_citation_support": 1.0,
+        "min_refusal_accuracy": 1.0,
+        "worst_run_p95_latency_ms": 10.0,
+        "worst_run_p95_token_estimate": 100,
+        "max_p95_latency_ms": None,
+        "max_p95_token_estimate": None,
+        "provenance": {
+            "corpus_sha256": "a" * 64,
+            "golden_sha256": "b" * 64,
+            "refusal_sha256": "c" * 64,
+            "chunking_strategy": "chars",
+            "chunk_size": 400,
+            "overlap": 60,
+            "fingerprint": "d" * 64,
+        },
+        "passed": True,
+    }
+    baseline_path.write_text(json.dumps(payload), encoding="utf-8")
+    candidate_payload = payload | {
+        "average_faithfulness": 0.9,
+        "lowest_run_faithfulness": 0.9,
+    }
+    candidate_path.write_text(json.dumps(candidate_payload), encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        ["benchmark-compare", str(baseline_path), str(candidate_path)],
+    )
+
+    assert result.exit_code == 1
+    assert "faithfulness" in result.output
