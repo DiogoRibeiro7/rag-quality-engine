@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, field_validator
 
 RETRIEVAL_MODES = frozenset({"lexical", "vector", "hybrid"})
 RETRIEVAL_FUSION_STRATEGIES = frozenset({"weighted", "rrf"})
+RERANKER_STRATEGIES = frozenset({"lexical", "embedding"})
 LLM_PROVIDERS = frozenset({"heuristic", "openai-compatible"})
 EMBEDDING_PROVIDERS = frozenset({"fake", "sentence-transformers"})
 
@@ -109,6 +110,7 @@ class RetrievalProfile(BaseModel):
     fusion_strategy: str = Field(default="weighted")
     rrf_k: int = Field(default=60, ge=1)
     rerank: bool = Field(default=False)
+    reranker_strategy: str = Field(default="lexical")
     rerank_candidate_multiplier: int = Field(default=4, ge=1)
 
     @field_validator("mode")
@@ -128,6 +130,17 @@ class RetrievalProfile(BaseModel):
             supported = ", ".join(sorted(RETRIEVAL_FUSION_STRATEGIES))
             raise ValueError(
                 f"Unsupported fusion strategy: {value}. Supported: {supported}."
+            )
+        return normalized
+
+    @field_validator("reranker_strategy")
+    @classmethod
+    def validate_reranker_strategy(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if normalized not in RERANKER_STRATEGIES:
+            supported = ", ".join(sorted(RERANKER_STRATEGIES))
+            raise ValueError(
+                f"Unsupported reranker strategy: {value}. Supported: {supported}."
             )
         return normalized
 
@@ -221,6 +234,7 @@ class RuntimeSettings(BaseModel):
         fusion_strategy: str | None = None,
         rrf_k: int | None = None,
         rerank: bool | None = None,
+        reranker_strategy: str | None = None,
         rerank_candidate_multiplier: int | None = None,
     ) -> RetrievalProfile:
         """Resolve a named profile with optional runtime overrides."""
@@ -238,6 +252,7 @@ class RuntimeSettings(BaseModel):
                 "fusion_strategy": fusion_strategy,
                 "rrf_k": rrf_k,
                 "rerank": rerank,
+                "reranker_strategy": reranker_strategy,
                 "rerank_candidate_multiplier": rerank_candidate_multiplier,
             }.items()
             if value is not None
