@@ -16,7 +16,7 @@ from ragops_lab import __version__
 from ragops_lab.config import RuntimeSettings
 from ragops_lab.domain import RagTrace, RetrievalResult
 from ragops_lab.evaluation import build_evaluation_judges, evaluate_answer
-from ragops_lab.generation import GenerationService, build_llm_client
+from ragops_lab.generation import GenerationService, LLMClient, build_llm_client
 from ragops_lab.ingestion import ChunkingConfig, ingest_directory, load_chunks_jsonl
 from ragops_lab.retrieval import (
     BM25Retriever,
@@ -380,8 +380,8 @@ def evaluate(request: EvaluateRequest) -> dict[str, object]:
         grounded=bool(request.citations),
     )
     strategy = request.evaluation_strategy or SETTINGS.evaluation.strategy
-    embedding_client = None
-    llm_client = None
+    embedding_client: EmbeddingClient | None = None
+    llm_client: LLMClient | None = None
     if strategy == "embedding":
         embedding_client = build_embedding_client(SETTINGS.embeddings)
     elif strategy == "llm":
