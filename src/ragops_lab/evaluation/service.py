@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import csv
+import json
 import re
 from pathlib import Path
 from typing import Protocol
 
 from ragops_lab.domain import ClaimSupportResult, EvaluationResult, GeneratedAnswer, RetrievalResult
+from ragops_lab.generation import LLMClient
 
 from ..retrieval.tokenizer import tokenize
 from ..retrieval.vector import EmbeddingClient, cosine_similarity
@@ -165,6 +167,34 @@ class EmbeddingRelevanceJudge:
         return min(1.0, (question_score + reference_score) / 2.0)
 
 
+class LLMRelevanceJudge:
+    """Provider-backed relevance judge using structured LLM output."""
+
+    def __init__(self, llm_client: LLMClient) -> None:
+        self.llm_client = llm_client
+
+    def score(self, question: str, answer_text: str, references: str) -> float:
+        """Score answer relevance using a structured LLM judgement."""
+        prompt = (
+            "Return JSON only with a numeric score from 0 to 1 for answer relevance.\n"
+            f"Question: {question}\n"
+            f"Answer: {answer_text}\n"
+            f"References: {references}\n"
+            'Schema: {"score": 0.0}'
+        )
+        try:
+            payload = json.loads(self.llm_client.generate(prompt))
+        except json.JSONDecodeError as exc:
+            raise ValueError("LLM relevance judge returned invalid JSON.") from exc
+        score = payload.get("score")
+        if not isinstance(score, int | float):
+            raise ValueError("LLM relevance judge response must include numeric score.")
+        normalized = float(score)
+        if not 0.0 <= normalized <= 1.0:
+            raise ValueError("LLM relevance judge score must be between 0 and 1.")
+        return normalized
+
+
 class ClaimSupportJudge(Protocol):
     """Judge abstraction used for claim-level faithfulness scoring."""
 
@@ -304,6 +334,91 @@ class EmbeddingClaimSupportJudge:
             supported=supported,
             score=best_score,
             evidence_chunk_id=best_result.chunk.chunk_id,
+            matched_terms=matched_terms,
+            missing_terms=[] if supported else missing_terms,
+        )
+
+
+class LLMClaimSupportJudge:
+    """Provider-backed claim-support judge using structured LLM output."""
+
+    def __init__(self, llm_client: LLMClient) -> None:
+        self.llm_client = llm_client
+
+    def score_claim(
+        self,
+        claim: str,
+        evidence: list[RetrievalResult],
+    ) -> ClaimSupportResult:
+        """Judge claim support against retrieved evidence."""
+        claim_terms = _content_terms(claim)
+        if not claim_terms:
+            return ClaimSupportResult(
+                claim=claim,
+                supported=True,
+                score=1.0,
+                matched_terms=[],
+                missing_terms=[],
+            )
+        if not evidence:
+            return ClaimSupportResult(
+                claim=claim,
+                supported=False,
+                score=0.0,
+                matched_terms=[],
+                missing_terms=claim_terms,
+            )
+
+        evidence_text = "\n".join(
+            f"[{result.chunk.chunk_id}] {result.chunk.text}"
+            for result in evidence
+        )
+        prompt = (
+            "Return JSON only with supported (boolean), score (0 to 1), "
+            "and evidence_chunk_id (string or null).\n"
+            f"Claim: {claim}\n"
+            f"Evidence:\n{evidence_text}\n"
+            'Schema: {"supported": true, "score": 1.0, "evidence_chunk_id": "chunk-id"}'
+        )
+        try:
+            payload = json.loads(self.llm_client.generate(prompt))
+        except json.JSONDecodeError as exc:
+            raise ValueError("LLM claim-support judge returned invalid JSON.") from exc
+
+        supported = payload.get("supported")
+        score = payload.get("score")
+        chunk_id = payload.get("evidence_chunk_id")
+        if not isinstance(supported, bool):
+            raise ValueError("LLM claim-support judge must include boolean supported.")
+        if not isinstance(score, int | float):
+            raise ValueError("LLM claim-support judge must include numeric score.")
+        normalized = float(score)
+        if not 0.0 <= normalized <= 1.0:
+            raise ValueError("LLM claim-support judge score must be between 0 and 1.")
+        if chunk_id is not None and not isinstance(chunk_id, str):
+            raise ValueError("LLM claim-support judge evidence_chunk_id must be a string or null.")
+
+        by_id = {result.chunk.chunk_id: result for result in evidence}
+        if chunk_id is not None and chunk_id not in by_id:
+            raise ValueError(
+                f"LLM claim-support judge returned unknown evidence chunk id: {chunk_id}"
+            )
+
+        selected = by_id.get(chunk_id) if chunk_id is not None else None
+        evidence_terms = set(_content_terms(selected.chunk.text)) if selected else set()
+        claim_numbers = {term for term in claim_terms if term.isdigit()}
+        missing_numbers = sorted(claim_numbers - evidence_terms)
+        if missing_numbers:
+            supported = False
+            normalized = 0.0
+
+        matched_terms = sorted(set(claim_terms) & evidence_terms)
+        missing_terms = sorted(set(claim_terms) - evidence_terms)
+        return ClaimSupportResult(
+            claim=claim,
+            supported=supported,
+            score=normalized,
+            evidence_chunk_id=chunk_id,
             matched_terms=matched_terms,
             missing_terms=[] if supported else missing_terms,
         )
