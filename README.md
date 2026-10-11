@@ -31,7 +31,7 @@ This project is built to demonstrate practical AI engineering, not just prompt w
 - Supports retrieve-then-rerank pipelines with a deterministic offline reranker.
 - Generates evidence-grounded answers with citation validation.
 - Evaluates context precision, context recall, claim-level faithfulness, citation support, unsupported claims, and refusal correctness.
-- Provides opt-in embedding-backed semantic judges for answer relevance and claim support while keeping deterministic lexical judges as the offline default.
+- Provides opt-in embedding-backed and provider-backed LLM judges for answer relevance and claim support while keeping deterministic lexical judges as the offline default.
 - Stores RAG traces with latency and token estimates.
 - Exposes the workflow through both a CLI and a FastAPI service.
 - Includes prompt regression coverage and an analytical notebook suite (see below).
@@ -347,7 +347,7 @@ See [`CONTRIBUTING.md`](CONTRIBUTING.md) for contribution guidelines and [`SECUR
 
 ## Notes
 
-- The default CLI and API generation path uses a deterministic local heuristic client so the repo works without external model credentials.
+- The default CLI and API generation path uses a deterministic local heuristic client so the repo works without external model credentials. Evaluation can also opt into LLM-backed relevance and claim-support judges by supplying an existing `LLMClient`; these judges require structured JSON responses and are never enabled by default.
 - The vector retrieval layer includes a fake embedding client for tests and an optional `sentence-transformers` adapter that can be enabled through runtime settings.
 - PDF ingestion is intentionally optional and exposed through an interface boundary rather than a hard dependency.
 
