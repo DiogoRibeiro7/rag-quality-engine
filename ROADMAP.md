@@ -82,6 +82,7 @@ The repository includes a working local MVP with:
 - Added token-aware chunking with token-count overlap and exact source offsets.
 - Added opt-in embedding-backed semantic judges for answer relevance and
   claim-level support.
+- Added opt-in provider-backed LLM judges for relevance and claim-level support.
 - Added configurable embedding-backed semantic reranking while retaining the
   lexical reranker as the default.
 - Added trace-dashboard KPIs, quality-state columns, and attention highlighting
@@ -95,9 +96,9 @@ These are confirmed defects with concrete reproduction paths. They should be
 fixed before the behaviours they affect are relied on.
 
 - **Lexical judges remain the deterministic defaults.** `OverlapJudge` and
-  `LexicalClaimSupportJudge` remain useful offline baselines, but they should
-  not be treated as semantic entailment. Opt-in embedding-backed relevance and
-  claim-support judges are now available behind the same protocols.
+  `LexicalClaimSupportJudge` remain useful offline baselines, while opt-in
+  embedding-backed and provider-backed LLM relevance/claim-support judges are
+  available behind the same protocols.
 
 ## Milestone 1 — Complete the evaluation pipeline
 
@@ -151,10 +152,10 @@ fixed before the behaviours they affect are relied on.
 - **Token- and sentence-aware chunking.** Completed: sentence-aware and
   token-aware chunking are implemented with exact source offsets; character
   chunking remains the backwards-compatible default.
-- **Semantic evaluation judges.** Completed: embedding-backed relevance and
-  claim-support judges are available behind the existing evaluation protocols,
-  with deterministic lexical judges retained as the offline default. A
-  provider-backed LLM judge remains a possible future extension.
+- **Semantic evaluation judges.** Completed: embedding-backed and provider-backed
+  LLM relevance/claim-support judges are available behind the existing
+  evaluation protocols, with deterministic lexical judges retained as the
+  offline default.
 - **Cost and latency budgets.** Completed: benchmark cases now record latency
   and token estimates, summaries report p95 values, and optional p95 budgets can
   participate in CI pass/fail alongside quality thresholds.
