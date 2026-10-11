@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from ragops_lab.domain import DocumentChunk, GeneratedAnswer, RetrievalResult
-from ragops_lab.generation import FakeLLMClient
 from ragops_lab.evaluation import (
     EmbeddingClaimSupportJudge,
     EmbeddingRelevanceJudge,
@@ -13,6 +12,7 @@ from ragops_lab.evaluation import (
     export_evaluation_report_csv,
     export_evaluation_report_markdown,
 )
+from ragops_lab.generation import FakeLLMClient
 
 
 def test_evaluation_metrics_and_exports(tmp_path: Path) -> None:
