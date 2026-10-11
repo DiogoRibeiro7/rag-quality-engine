@@ -22,7 +22,7 @@ from .evaluation import (
     validate_benchmark_baseline,
     write_benchmark_artifacts,
 )
-from .generation import GenerationService, build_llm_client
+from .generation import GenerationService, LLMClient, build_llm_client
 from .ingestion import ChunkingConfig, ingest_directory, load_chunks_jsonl
 from .retrieval import (
     BM25Retriever,
@@ -184,8 +184,8 @@ def ask(
     except (RuntimeError, ValueError) as exc:
         _fail(str(exc))
     strategy = evaluation_strategy or settings.evaluation.strategy
-    evaluation_embedding_client = None
-    evaluation_llm_client = None
+    evaluation_embedding_client: EmbeddingClient | None = None
+    evaluation_llm_client: LLMClient | None = None
     if strategy == "embedding":
         try:
             evaluation_embedding_client = build_embedding_client(settings.embeddings)
