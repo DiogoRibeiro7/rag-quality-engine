@@ -31,7 +31,7 @@ This project is built to demonstrate practical AI engineering, not just prompt w
 - Supports retrieve-then-rerank pipelines with a deterministic offline reranker.
 - Generates evidence-grounded answers with citation validation.
 - Evaluates context precision, context recall, claim-level faithfulness, citation support, unsupported claims, and refusal correctness.
-- Provides opt-in embedding-backed and provider-backed LLM judges for answer relevance and claim support while keeping deterministic lexical judges as the offline default.
+- Provides configurable lexical, embedding-backed, and provider-backed LLM judges for answer relevance and claim support while keeping deterministic lexical judges as the default.
 - Stores RAG traces with latency and token estimates.
 - Exposes the workflow through both a CLI and a FastAPI service.
 - Includes prompt regression coverage and an analytical notebook suite (see below).
@@ -198,6 +198,12 @@ on comparable scales. Reranking can be enabled for any retrieval mode. The defau
 reranker is deterministic and offline; `reranker_strategy=embedding` uses the
 configured embedding provider for semantic second-stage scoring before the final
 top-k.
+
+Evaluation strategy is configured independently through
+`RAGOPS_EVALUATION_STRATEGY` or request/CLI overrides. Supported values are
+`lexical` (default), `embedding`, and `llm`. The embedding strategy reuses
+the configured embedding provider; the LLM strategy reuses the configured LLM
+provider.
 
 ## Project structure
 
