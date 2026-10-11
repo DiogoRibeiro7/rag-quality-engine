@@ -343,3 +343,30 @@ def test_cli_benchmark_baseline_validate(tmp_path: Path) -> None:
 
     assert result.exit_code == 0
     assert "benchmark_fingerprint" in result.output
+
+
+def test_cli_ask_supports_embedding_evaluation_strategy(tmp_path: Path) -> None:
+    runner = CliRunner()
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    (raw_dir / "apollo.txt").write_text(
+        "Apollo 11 landed humans on the Moon.",
+        encoding="utf-8",
+    )
+    chunks_path = tmp_path / "chunks.jsonl"
+    ingest_directory(raw_dir, chunks_path, ChunkingConfig(chunk_size=120, overlap=10))
+
+    result = runner.invoke(
+        app,
+        [
+            "ask",
+            "Which mission landed humans on the Moon?",
+            "--chunks",
+            str(chunks_path),
+            "--evaluation-strategy",
+            "embedding",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Faithfulness" in result.output

@@ -4,7 +4,12 @@ from pathlib import Path
 
 from pytest import MonkeyPatch
 
-from ragops_lab.config import ProjectPaths, RetrievalProfile, RuntimeSettings
+from ragops_lab.config import (
+    EvaluationSettings,
+    ProjectPaths,
+    RetrievalProfile,
+    RuntimeSettings,
+)
 
 
 def test_runtime_settings_defaults_are_valid() -> None:
@@ -14,6 +19,7 @@ def test_runtime_settings_defaults_are_valid() -> None:
     assert settings.random_seed >= 0
     assert isinstance(settings.paths, ProjectPaths)
     assert settings.retrieval_profiles["hybrid"].mode == "hybrid"
+    assert settings.evaluation.strategy == "lexical"
 
 
 def test_retrieval_profile_rejects_unsupported_modes() -> None:
@@ -81,6 +87,7 @@ def test_runtime_settings_can_load_environment_overrides(monkeypatch: MonkeyPatc
     monkeypatch.setenv("RAGOPS_API_MAX_REQUEST_BYTES", "2048")
     monkeypatch.setenv("RAGOPS_API_MAX_TOP_K", "7")
     monkeypatch.setenv("RAGOPS_API_MAX_QUERY_CHARS", "120")
+    monkeypatch.setenv("RAGOPS_EVALUATION_STRATEGY", "embedding")
 
     settings = RuntimeSettings.from_env()
 
@@ -96,6 +103,7 @@ def test_runtime_settings_can_load_environment_overrides(monkeypatch: MonkeyPatc
     assert settings.api_max_request_bytes == 2048
     assert settings.api_max_top_k == 7
     assert settings.api_max_query_chars == 120
+    assert settings.evaluation.strategy == "embedding"
 
 
 def test_runtime_settings_reject_invalid_environment_integers(
@@ -131,3 +139,12 @@ def test_retrieval_profile_rejects_invalid_reranker_strategy() -> None:
         assert "Unsupported reranker strategy" in str(exc)
     else:
         raise AssertionError("Expected invalid reranker strategy to fail.")
+
+
+def test_evaluation_settings_rejects_unknown_strategy() -> None:
+    try:
+        EvaluationSettings(strategy="unknown")
+    except ValueError as exc:
+        assert "Unsupported evaluation strategy" in str(exc)
+    else:
+        raise AssertionError("Expected invalid evaluation strategy to fail.")

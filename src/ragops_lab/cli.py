@@ -11,6 +11,7 @@ from rich.table import Table
 
 from .config import RuntimeSettings
 from .evaluation import (
+    build_evaluation_judges,
     compare_benchmark_summaries,
     evaluate_answer,
     load_benchmark_summary,
@@ -21,7 +22,7 @@ from .evaluation import (
     validate_benchmark_baseline,
     write_benchmark_artifacts,
 )
-from .generation import GenerationService, build_llm_client
+from .generation import GenerationService, LLMClient, build_llm_client
 from .ingestion import ChunkingConfig, ingest_directory, load_chunks_jsonl
 from .retrieval import (
     BM25Retriever,
@@ -119,6 +120,7 @@ def ask(
     rerank: bool | None = None,
     reranker_strategy: str | None = None,
     rerank_candidate_multiplier: int | None = None,
+    evaluation_strategy: str | None = None,
 ) -> None:
     """Ask a grounded question over ingested chunks."""
     settings = RuntimeSettings.from_env()
@@ -181,7 +183,31 @@ def ask(
         answer = GenerationService(llm_client).answer(question, results, model_name=model_name)
     except (RuntimeError, ValueError) as exc:
         _fail(str(exc))
-    evaluation = evaluate_answer(question, answer, results)
+    strategy = evaluation_strategy or settings.evaluation.strategy
+    evaluation_embedding_client: EmbeddingClient | None = None
+    evaluation_llm_client: LLMClient | None = None
+    if strategy == "embedding":
+        try:
+            evaluation_embedding_client = build_embedding_client(settings.embeddings)
+        except (RuntimeError, ValueError) as exc:
+            _fail(str(exc))
+    elif strategy == "llm":
+        evaluation_llm_client = llm_client
+    try:
+        relevance_judge, claim_judge = build_evaluation_judges(
+            strategy,
+            embedding_client=evaluation_embedding_client,
+            llm_client=evaluation_llm_client,
+        )
+    except ValueError as exc:
+        _fail(str(exc))
+    evaluation = evaluate_answer(
+        question,
+        answer,
+        results,
+        judge=relevance_judge,
+        claim_judge=claim_judge,
+    )
     table = Table(title="RAG Answer")
     table.add_column("Field")
     table.add_column("Value")

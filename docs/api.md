@@ -223,6 +223,15 @@ expected case is marked unanswerable.
 
 ## Evaluate a Supplied Answer
 
+`POST /evaluate` accepts an optional `evaluation_strategy` field:
+
+- `lexical` — deterministic offline default;
+- `embedding` — uses the configured embedding provider;
+- `llm` — uses the configured LLM provider and structured judge responses.
+
+When omitted, the API uses `RAGOPS_EVALUATION_STRATEGY` (default: `lexical`).
+
+
 `POST /evaluate` is useful for scoring a candidate answer generated outside the
 API. Provide retrieved chunk IDs from the same chunk store.
 

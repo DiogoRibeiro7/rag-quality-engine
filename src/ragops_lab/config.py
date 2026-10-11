@@ -12,6 +12,7 @@ RETRIEVAL_FUSION_STRATEGIES = frozenset({"weighted", "rrf"})
 RERANKER_STRATEGIES = frozenset({"lexical", "embedding"})
 LLM_PROVIDERS = frozenset({"heuristic", "openai-compatible"})
 EMBEDDING_PROVIDERS = frozenset({"fake", "sentence-transformers"})
+EVALUATION_STRATEGIES = frozenset({"lexical", "embedding", "llm"})
 
 
 class ProjectPaths(BaseModel):
@@ -99,6 +100,23 @@ class EmbeddingSettings(BaseModel):
         return normalized
 
 
+class EvaluationSettings(BaseModel):
+    """Evaluation judge strategy settings."""
+
+    strategy: str = Field(default="lexical")
+
+    @field_validator("strategy")
+    @classmethod
+    def validate_strategy(cls, value: str) -> str:
+        normalized = value.strip().lower()
+        if normalized not in EVALUATION_STRATEGIES:
+            supported = ", ".join(sorted(EVALUATION_STRATEGIES))
+            raise ValueError(
+                f"Unsupported evaluation strategy: {value}. Supported: {supported}."
+            )
+        return normalized
+
+
 class RetrievalProfile(BaseModel):
     """Retrieval configuration decoupled from runtime paths."""
 
@@ -158,6 +176,7 @@ class RuntimeSettings(BaseModel):
     api_max_text_chars: int = Field(default=20_000, ge=1)
     llm: LLMSettings = Field(default_factory=LLMSettings)
     embeddings: EmbeddingSettings = Field(default_factory=EmbeddingSettings)
+    evaluation: EvaluationSettings = Field(default_factory=EvaluationSettings)
     retrieval_profiles: dict[str, RetrievalProfile] = Field(
         default_factory=lambda: {
             "lexical": RetrievalProfile(name="lexical", mode="lexical", top_k=5),
@@ -220,6 +239,9 @@ class RuntimeSettings(BaseModel):
             embeddings=EmbeddingSettings(
                 provider=os.getenv("RAGOPS_EMBEDDING_PROVIDER", "fake"),
                 model=os.getenv("RAGOPS_EMBEDDING_MODEL", "fake-bow"),
+            ),
+            evaluation=EvaluationSettings(
+                strategy=os.getenv("RAGOPS_EVALUATION_STRATEGY", "lexical"),
             ),
         )
 

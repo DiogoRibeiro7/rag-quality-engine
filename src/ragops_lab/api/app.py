@@ -15,8 +15,8 @@ from pydantic import BaseModel, Field, field_validator
 from ragops_lab import __version__
 from ragops_lab.config import RuntimeSettings
 from ragops_lab.domain import RagTrace, RetrievalResult
-from ragops_lab.evaluation import evaluate_answer
-from ragops_lab.generation import GenerationService, build_llm_client
+from ragops_lab.evaluation import build_evaluation_judges, evaluate_answer
+from ragops_lab.generation import GenerationService, LLMClient, build_llm_client
 from ragops_lab.ingestion import ChunkingConfig, ingest_directory, load_chunks_jsonl
 from ragops_lab.retrieval import (
     BM25Retriever,
@@ -187,6 +187,7 @@ class EvaluateRequest(BaseModel):
     reference_chunk_ids: list[str] = Field(default_factory=list)
     expected_answer: str = Field(default="")
     expected_unanswerable: bool | None = Field(default=None)
+    evaluation_strategy: str | None = Field(default=None)
 
     @field_validator("question")
     @classmethod
@@ -206,7 +207,7 @@ class EvaluateRequest(BaseModel):
             max_chars=SETTINGS.api_max_text_chars,
         )
 
-    @field_validator("chunks_path")
+    @field_validator("chunks_path", "evaluation_strategy")
     @classmethod
     def validate_chunks_path(cls, value: str) -> str:
         return _validate_text_limit(value, field_name="path")
@@ -378,6 +379,18 @@ def evaluate(request: EvaluateRequest) -> dict[str, object]:
         refusal=False,
         grounded=bool(request.citations),
     )
+    strategy = request.evaluation_strategy or SETTINGS.evaluation.strategy
+    embedding_client: EmbeddingClient | None = None
+    llm_client: LLMClient | None = None
+    if strategy == "embedding":
+        embedding_client = build_embedding_client(SETTINGS.embeddings)
+    elif strategy == "llm":
+        llm_client, _ = build_llm_client(SETTINGS.llm)
+    relevance_judge, claim_judge = build_evaluation_judges(
+        strategy,
+        embedding_client=embedding_client,
+        llm_client=llm_client,
+    )
     report = evaluate_answer(
         request.question,
         answer,
@@ -385,6 +398,8 @@ def evaluate(request: EvaluateRequest) -> dict[str, object]:
         reference_chunk_ids=request.reference_chunk_ids,
         expected_answer=request.expected_answer,
         expected_unanswerable=request.expected_unanswerable,
+        judge=relevance_judge,
+        claim_judge=claim_judge,
     )
     return report.model_dump(mode="json")
 
