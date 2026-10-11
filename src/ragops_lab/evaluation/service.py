@@ -424,6 +424,30 @@ class LLMClaimSupportJudge:
         )
 
 
+def build_evaluation_judges(
+    strategy: str,
+    *,
+    embedding_client: EmbeddingClient | None = None,
+    llm_client: LLMClient | None = None,
+) -> tuple[RelevanceJudge, ClaimSupportJudge]:
+    """Build relevance and claim-support judges for one evaluation strategy."""
+    normalized = strategy.strip().lower()
+    if normalized == "lexical":
+        return OverlapJudge(), LexicalClaimSupportJudge()
+    if normalized == "embedding":
+        if embedding_client is None:
+            raise ValueError("Embedding evaluation requires an embedding client.")
+        return (
+            EmbeddingRelevanceJudge(embedding_client),
+            EmbeddingClaimSupportJudge(embedding_client),
+        )
+    if normalized == "llm":
+        if llm_client is None:
+            raise ValueError("LLM evaluation requires an LLM client.")
+        return LLMRelevanceJudge(llm_client), LLMClaimSupportJudge(llm_client)
+    raise ValueError(f"Unsupported evaluation strategy: {strategy}")
+
+
 def context_precision(results: list[RetrievalResult], reference_chunk_ids: set[str]) -> float:
     """Measure the proportion of retrieved chunks that are relevant."""
     if not results:
