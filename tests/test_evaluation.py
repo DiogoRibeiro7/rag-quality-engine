@@ -6,10 +6,13 @@ from ragops_lab.domain import DocumentChunk, GeneratedAnswer, RetrievalResult
 from ragops_lab.evaluation import (
     EmbeddingClaimSupportJudge,
     EmbeddingRelevanceJudge,
+    LLMClaimSupportJudge,
+    LLMRelevanceJudge,
     evaluate_answer,
     export_evaluation_report_csv,
     export_evaluation_report_markdown,
 )
+from ragops_lab.generation import FakeLLMClient
 
 
 def test_evaluation_metrics_and_exports(tmp_path: Path) -> None:
@@ -305,3 +308,102 @@ def test_evaluate_answer_accepts_semantic_judges() -> None:
 
     assert report.answer_relevance == 1.0
     assert report.faithfulness == 1.0
+
+
+def test_llm_relevance_judge_returns_validated_score() -> None:
+    judge = LLMRelevanceJudge(FakeLLMClient('{"score": 0.75}'))
+
+    score = judge.score(
+        "What happened on the Moon?",
+        "Apollo 11 landed on the Moon.",
+        "Apollo 11 landed humans on the Moon in 1969.",
+    )
+
+    assert score == 0.75
+
+
+def test_llm_relevance_judge_rejects_invalid_json() -> None:
+    judge = LLMRelevanceJudge(FakeLLMClient("not-json"))
+
+    try:
+        judge.score("Question?", "Answer.", "Reference.")
+    except ValueError as exc:
+        assert "invalid JSON" in str(exc)
+    else:
+        raise AssertionError("Expected malformed judge response to fail.")
+
+
+def test_llm_claim_support_judge_selects_valid_evidence() -> None:
+    chunk = DocumentChunk(
+        chunk_id="apollo:0",
+        document_id="apollo",
+        text="Apollo 11 landed humans on the Moon in 1969.",
+        start_offset=0,
+        end_offset=46,
+        token_count=9,
+    )
+    judge = LLMClaimSupportJudge(
+        FakeLLMClient(
+            '{"supported": true, "score": 0.95, "evidence_chunk_id": "apollo:0"}'
+        )
+    )
+
+    result = judge.score_claim(
+        "Apollo 11 landed humans on the Moon in 1969.",
+        [RetrievalResult(chunk=chunk, score=1.0, rank=1, retrieval_method="lexical")],
+    )
+
+    assert result.supported is True
+    assert result.score == 0.95
+    assert result.evidence_chunk_id == "apollo:0"
+
+
+def test_llm_claim_support_judge_rejects_unknown_evidence_id() -> None:
+    chunk = DocumentChunk(
+        chunk_id="apollo:0",
+        document_id="apollo",
+        text="Apollo 11 landed humans on the Moon.",
+        start_offset=0,
+        end_offset=36,
+        token_count=7,
+    )
+    judge = LLMClaimSupportJudge(
+        FakeLLMClient(
+            '{"supported": true, "score": 0.9, "evidence_chunk_id": "missing:0"}'
+        )
+    )
+
+    try:
+        judge.score_claim(
+            "Apollo 11 landed humans on the Moon.",
+            [RetrievalResult(chunk=chunk, score=1.0, rank=1, retrieval_method="lexical")],
+        )
+    except ValueError as exc:
+        assert "unknown evidence chunk id" in str(exc)
+    else:
+        raise AssertionError("Expected unknown evidence id to fail.")
+
+
+def test_llm_claim_support_judge_enforces_numeric_consistency() -> None:
+    chunk = DocumentChunk(
+        chunk_id="apollo:0",
+        document_id="apollo",
+        text="Apollo 11 landed humans on the Moon.",
+        start_offset=0,
+        end_offset=36,
+        token_count=7,
+    )
+    judge = LLMClaimSupportJudge(
+        FakeLLMClient(
+            '{"supported": true, "score": 1.0, "evidence_chunk_id": "apollo:0"}'
+        )
+    )
+
+    result = judge.score_claim(
+        "Apollo 12 landed humans on the Moon.",
+        [RetrievalResult(chunk=chunk, score=1.0, rank=1, retrieval_method="lexical")],
+    )
+
+    assert result.supported is False
+    assert result.score == 0.0
+    assert "12" in result.missing_terms
