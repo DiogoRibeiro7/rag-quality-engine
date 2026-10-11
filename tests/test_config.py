@@ -4,7 +4,12 @@ from pathlib import Path
 
 from pytest import MonkeyPatch
 
-from ragops_lab.config import EvaluationSettings, ProjectPaths, RetrievalProfile, RuntimeSettings
+from ragops_lab.config import (
+    EvaluationSettings,
+    ProjectPaths,
+    RetrievalProfile,
+    RuntimeSettings,
+)
 
 
 def test_runtime_settings_defaults_are_valid() -> None:
