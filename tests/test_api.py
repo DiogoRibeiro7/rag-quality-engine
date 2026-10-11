@@ -486,3 +486,57 @@ def test_api_search_can_enable_embedding_reranking(tmp_path: Path) -> None:
 
     assert response.status_code == 200
     assert response.json()[0]["retrieval_method"] == "reranked-lexical"
+
+
+def test_api_evaluate_supports_embedding_strategy(tmp_path: Path) -> None:
+    client = TestClient(app)
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    (raw_dir / "apollo.txt").write_text(
+        "Apollo 11 landed humans on the Moon.",
+        encoding="utf-8",
+    )
+    chunks_path = tmp_path / "chunks.jsonl"
+    ingest_directory(raw_dir, chunks_path, ChunkingConfig(chunk_size=120, overlap=10))
+
+    response = client.post(
+        "/evaluate",
+        json={
+            "question": "Which mission landed humans on the Moon?",
+            "answer_text": "Apollo 11 landed humans on the Moon.",
+            "citations": ["apollo:0"],
+            "chunks_path": str(chunks_path),
+            "retrieved_chunk_ids": ["apollo:0"],
+            "reference_chunk_ids": ["apollo:0"],
+            "evaluation_strategy": "embedding",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["faithfulness"] == 1.0
+
+
+def test_api_rejects_unknown_evaluation_strategy(tmp_path: Path) -> None:
+    client = TestClient(app)
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    (raw_dir / "apollo.txt").write_text(
+        "Apollo 11 landed humans on the Moon.",
+        encoding="utf-8",
+    )
+    chunks_path = tmp_path / "chunks.jsonl"
+    ingest_directory(raw_dir, chunks_path, ChunkingConfig(chunk_size=120, overlap=10))
+
+    response = client.post(
+        "/evaluate",
+        json={
+            "question": "Which mission landed humans on the Moon?",
+            "answer_text": "Apollo 11 landed humans on the Moon.",
+            "chunks_path": str(chunks_path),
+            "retrieved_chunk_ids": ["apollo:0"],
+            "evaluation_strategy": "unknown",
+        },
+    )
+
+    assert response.status_code == 400
+    assert "Unsupported evaluation strategy" in response.text
