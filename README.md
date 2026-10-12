@@ -256,7 +256,7 @@ Each answerable input example should contain a query and one or more exact evide
 the bundled golden and refusal sets and writes JSON, CSV, and Markdown reports
 to `artifacts/evaluation`.
 
-`make benchmark` runs the same dataset benchmark through the CLI. Benchmark JSON and Markdown artifacts include a SHA-256 provenance fingerprint derived from the corpus, golden/refusal fixtures, chunking configuration, and evaluation strategy, so results are comparable only when their fingerprints match. Changing from lexical to embedding or LLM judges intentionally produces a different fingerprint. Optional `--max-p95-latency-ms` and `--max-p95-token-estimate` flags add performance/cost gates to the quality regression checks. For repeated runs or custom datasets:
+`make benchmark` runs the same dataset benchmark through the CLI. Benchmark JSON and Markdown artifacts include a SHA-256 provenance fingerprint derived from the corpus, golden/refusal fixtures, chunking configuration, evaluation strategy, provider, and model. Results are comparable only when their fingerprints match. Changing judge strategy, provider, or model intentionally produces a different fingerprint. Optional `--max-p95-latency-ms` and `--max-p95-token-estimate` flags add performance/cost gates to the quality regression checks. For repeated runs or custom datasets:
 
 ```bash
 poetry run rag-quality-engine benchmark --runs 3 --source-dir data/sample_documents --golden-path data/golden/qa.json --refusal-path data/golden/refusal.json --out artifacts/evaluation
