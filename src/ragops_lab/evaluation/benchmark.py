@@ -54,7 +54,7 @@ class BenchmarkProvenance(BaseModel):
     chunking_strategy: str = Field(min_length=1)
     chunk_size: int = Field(ge=1)
     overlap: int = Field(ge=0)
-    evaluation_strategy: str = Field(min_length=1)
+    evaluation_strategy: str = Field(default="lexical", min_length=1)
     fingerprint: str = Field(min_length=64, max_length=64)
 
 
