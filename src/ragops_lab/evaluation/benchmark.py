@@ -145,7 +145,7 @@ class BenchmarkRegressionTolerances(BaseModel):
 
     quality_drop: float = Field(default=0.0, ge=0.0)
     latency_absolute_ms: float = Field(default=1.0, ge=0.0)
-    latency_relative: float = Field(default=0.25, ge=0.0)
+    latency_relative: float = Field(default=0.10, ge=0.0)
     token_increase: int = Field(default=0, ge=0)
 
 
