@@ -164,9 +164,9 @@ and deployment guidance.
 
 The next phase is post-MVP hardening and longitudinal evaluation:
 
-- **Approved benchmark baseline activation.** Promote the first reviewed
-  baseline so the optional CI comparison gate becomes active on every pull
-  request.
+- **Approved benchmark baseline activation.** Completed: the first reviewed
+  CI-produced baseline is committed, validated, and active in pull-request
+  regression comparison.
 - **Benchmark history and trend reporting.** Persist comparable benchmark
   summaries across releases and render metric trends instead of only pairwise
   diffs.
@@ -183,12 +183,10 @@ The next phase is post-MVP hardening and longitudinal evaluation:
 
 ## Near-term priorities
 
-1. Promote and commit the first reviewed benchmark baseline so CI regression
-   comparison becomes active rather than optional.
-2. Add benchmark-history storage and release-to-release trend reporting.
-3. Add structured observability and trace/request correlation for public demos.
-4. Introduce pluggable storage interfaces while keeping filesystem-backed local
+1. Add benchmark-history storage and release-to-release trend reporting.
+2. Add structured observability and trace/request correlation for public demos.
+3. Introduce pluggable storage interfaces while keeping filesystem-backed local
    implementations as the default.
-5. Add optional authentication and rate limiting for public API deployments.
-6. Prepare the 0.3.0 release with an updated changelog, baseline snapshot, and
+4. Add optional authentication and rate limiting for public API deployments.
+5. Prepare the 0.3.0 release with an updated changelog, active baseline, and
    deployment contract.
