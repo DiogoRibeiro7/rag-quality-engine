@@ -140,6 +140,15 @@ class BenchmarkBaselineValidation(BaseModel):
     query_count: int
 
 
+class BenchmarkRegressionTolerances(BaseModel):
+    """Allowed benchmark deltas before a change is classified as a regression."""
+
+    quality_drop: float = Field(default=0.0, ge=0.0)
+    latency_absolute_ms: float = Field(default=1.0, ge=0.0)
+    latency_relative: float = Field(default=0.10, ge=0.0)
+    token_increase: int = Field(default=0, ge=0)
+
+
 class BenchmarkCaseComparison(BaseModel):
     """Per-query benchmark deltas between baseline and candidate cases."""
 
@@ -175,6 +184,9 @@ class BenchmarkComparison(BaseModel):
     p95_latency_ms_delta: float
     p95_token_estimate_delta: int
     regressions: list[str] = Field(default_factory=list)
+    tolerances: BenchmarkRegressionTolerances = Field(
+        default_factory=BenchmarkRegressionTolerances
+    )
     case_comparisons: list[BenchmarkCaseComparison] = Field(default_factory=list)
 
     @property
@@ -194,8 +206,11 @@ def load_evaluation_cases(path: Path) -> list[EvaluationCase]:
 def compare_evaluation_cases(
     baseline_cases: list[EvaluationCase],
     candidate_cases: list[EvaluationCase],
+    *,
+    tolerances: BenchmarkRegressionTolerances | None = None,
 ) -> list[BenchmarkCaseComparison]:
     """Compare benchmark cases aligned by query."""
+    thresholds = tolerances or BenchmarkRegressionTolerances()
     baseline_by_query = {case.query: case for case in baseline_cases}
     candidate_by_query = {case.query: case for case in candidate_cases}
     queries = sorted(set(baseline_by_query) | set(candidate_by_query))
@@ -237,10 +252,18 @@ def compare_evaluation_cases(
             "faithfulness": faithfulness_delta,
             "citation_support": citation_delta,
         }
-        regressions.extend(name for name, delta in monitored.items() if delta < 0.0)
-        if latency_delta > 0.0:
+        regressions.extend(
+            name
+            for name, delta in monitored.items()
+            if delta < -thresholds.quality_drop
+        )
+        latency_limit = max(
+            thresholds.latency_absolute_ms,
+            baseline_case.latency_ms * thresholds.latency_relative,
+        )
+        if latency_delta > latency_limit:
             regressions.append("latency_ms")
-        if token_delta > 0:
+        if token_delta > thresholds.token_increase:
             regressions.append("token_estimate")
 
         comparisons.append(
@@ -387,8 +410,10 @@ def compare_benchmark_summaries(
     allow_mismatched_fingerprints: bool = False,
     baseline_cases: list[EvaluationCase] | None = None,
     candidate_cases: list[EvaluationCase] | None = None,
+    tolerances: BenchmarkRegressionTolerances | None = None,
 ) -> BenchmarkComparison:
     """Compare persisted benchmark summaries and classify regressions."""
+    thresholds = tolerances or BenchmarkRegressionTolerances()
     fingerprint_match = baseline.provenance.fingerprint == candidate.provenance.fingerprint
     if not fingerprint_match and not allow_mismatched_fingerprints:
         raise ValueError(
@@ -419,10 +444,18 @@ def compare_benchmark_summaries(
         "citation_support": citation_delta,
         "refusal_accuracy": refusal_delta,
     }
-    regressions.extend(name for name, delta in monitored.items() if delta < 0.0)
-    if latency_delta > 0.0:
+    regressions.extend(
+        name
+        for name, delta in monitored.items()
+        if delta < -thresholds.quality_drop
+    )
+    latency_limit = max(
+        thresholds.latency_absolute_ms,
+        baseline.worst_run_p95_latency_ms * thresholds.latency_relative,
+    )
+    if latency_delta > latency_limit:
         regressions.append("p95_latency_ms")
-    if token_delta > 0:
+    if token_delta > thresholds.token_increase:
         regressions.append("p95_token_estimate")
     if baseline.passed and not candidate.passed:
         regressions.append("passed")
@@ -433,7 +466,11 @@ def compare_benchmark_summaries(
             raise ValueError(
                 "Both baseline_cases and candidate_cases are required for case comparison."
             )
-        case_comparisons = compare_evaluation_cases(baseline_cases, candidate_cases)
+        case_comparisons = compare_evaluation_cases(
+            baseline_cases,
+            candidate_cases,
+            tolerances=thresholds,
+        )
         regressions.extend(
             f"query:{comparison.query}"
             for comparison in case_comparisons
@@ -454,6 +491,7 @@ def compare_benchmark_summaries(
         p95_latency_ms_delta=latency_delta,
         p95_token_estimate_delta=token_delta,
         regressions=regressions,
+        tolerances=thresholds,
         case_comparisons=case_comparisons,
     )
 

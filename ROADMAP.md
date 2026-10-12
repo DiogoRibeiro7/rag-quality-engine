@@ -74,6 +74,8 @@ The repository includes a mature evaluation-first MVP with:
 - Added baseline manifest metadata so approved benchmarks record project version,
   Git commit, promotion time, and benchmark fingerprint.
 - Added baseline integrity validation before CI regression comparison.
+- Added explicit benchmark regression tolerances so latency noise does not make
+  the baseline gate flaky while quality/token regressions stay strict.
 - Added optional p95 latency and token budget gates to benchmark regression
   checks.
 - Added golden-set rebuild tooling based on stable evidence phrases.

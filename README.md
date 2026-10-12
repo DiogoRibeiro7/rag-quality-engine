@@ -291,8 +291,12 @@ and missing queries are surfaced explicitly.
 Comparison requires matching benchmark fingerprints by default so corpus/chunking
 changes are not misclassified as model regressions. Use
 `--allow-mismatched-fingerprints` only when that comparison is intentional.
-The command exits non-zero when monitored quality metrics decrease, p95 latency
-or token usage increases, or a previously passing benchmark starts failing.
+The command exits non-zero when monitored quality metrics regress, token usage
+increases, or a previously passing benchmark starts failing. Latency comparison
+uses a small default tolerance to avoid CI noise: a regression is reported only
+when p95 latency increases by more than max(1 ms, 10% of the baseline). Quality
+and token regressions remain strict by default. All tolerances can be overridden
+through `benchmark-compare` CLI options.
 
 For CI, `make benchmark-baseline-check` first validates the committed summary,
 cases, and manifest with `benchmark-baseline-validate`, then performs the same
