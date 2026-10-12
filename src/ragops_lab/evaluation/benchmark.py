@@ -15,10 +15,10 @@ from pydantic import BaseModel, Field
 
 from ragops_lab import __version__
 from ragops_lab.domain import EvaluationResult, GeneratedAnswer
-from ragops_lab.evaluation.service import evaluate_answer
-from ragops_lab.generation import GenerationService, HeuristicLLMClient
+from ragops_lab.evaluation.service import build_evaluation_judges, evaluate_answer
+from ragops_lab.generation import GenerationService, HeuristicLLMClient, LLMClient
 from ragops_lab.ingestion import ChunkingConfig, ingest_directory
-from ragops_lab.retrieval import BM25Retriever
+from ragops_lab.retrieval import BM25Retriever, EmbeddingClient
 from ragops_lab.retrieval.evaluation import recall_at_k, reciprocal_rank
 
 
@@ -54,6 +54,7 @@ class BenchmarkProvenance(BaseModel):
     chunking_strategy: str = Field(min_length=1)
     chunk_size: int = Field(ge=1)
     overlap: int = Field(ge=0)
+    evaluation_strategy: str = Field(min_length=1)
     fingerprint: str = Field(min_length=64, max_length=64)
 
 
@@ -486,6 +487,7 @@ def build_benchmark_provenance(
     chunk_size: int,
     overlap: int,
     chunking_strategy: str = "chars",
+    evaluation_strategy: str = "lexical",
 ) -> BenchmarkProvenance:
     """Build deterministic provenance for a benchmark configuration."""
     corpus_sha256 = _sha256_directory(source_dir)
@@ -498,6 +500,7 @@ def build_benchmark_provenance(
         "chunking_strategy": chunking_strategy,
         "chunk_size": chunk_size,
         "overlap": overlap,
+        "evaluation_strategy": evaluation_strategy,
     }
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     fingerprint = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
@@ -508,6 +511,7 @@ def build_benchmark_provenance(
         chunking_strategy=chunking_strategy,
         chunk_size=chunk_size,
         overlap=overlap,
+        evaluation_strategy=evaluation_strategy,
         fingerprint=fingerprint,
     )
 
@@ -551,6 +555,9 @@ def run_evaluation(
     min_refusal_accuracy: float = 1.0,
     max_p95_latency_ms: float | None = None,
     max_p95_token_estimate: int | None = None,
+    evaluation_strategy: str = "lexical",
+    embedding_client: EmbeddingClient | None = None,
+    llm_client: LLMClient | None = None,
 ) -> tuple[EvaluationSummary, list[EvaluationCase]]:
     """Run one deterministic RAG evaluation pass over a golden dataset."""
     _validate_benchmark_inputs(
@@ -574,6 +581,7 @@ def run_evaluation(
         chunk_size=chunking.chunk_size,
         overlap=chunking.overlap,
         chunking_strategy=chunking.strategy,
+        evaluation_strategy=evaluation_strategy,
     )
     chunks = ingest_directory(
         source_dir,
@@ -582,6 +590,11 @@ def run_evaluation(
     )
     retriever = BM25Retriever(chunks)
     generation = GenerationService(HeuristicLLMClient())
+    relevance_judge, claim_judge = build_evaluation_judges(
+        evaluation_strategy,
+        embedding_client=embedding_client,
+        llm_client=llm_client,
+    )
     golden_examples = load_golden_examples(golden_path)
     if refusal_path is not None:
         golden_examples.extend(load_golden_examples(refusal_path))
@@ -608,6 +621,8 @@ def run_evaluation(
             results,
             reference_chunk_ids=example.relevant_chunk_ids,
             expected_unanswerable=example.expected_unanswerable,
+            judge=relevance_judge,
+            claim_judge=claim_judge,
         )
         latency_ms = (perf_counter() - started) * 1000.0
         token_estimate = sum(result.chunk.token_count for result in results)
@@ -690,6 +705,9 @@ def run_benchmark(
     min_refusal_accuracy: float = 1.0,
     max_p95_latency_ms: float | None = None,
     max_p95_token_estimate: int | None = None,
+    evaluation_strategy: str = "lexical",
+    embedding_client: EmbeddingClient | None = None,
+    llm_client: LLMClient | None = None,
 ) -> tuple[BenchmarkSummary, list[BenchmarkRun]]:
     """Run repeated benchmark passes and aggregate their metrics."""
     if runs < 1:
@@ -724,6 +742,9 @@ def run_benchmark(
             min_refusal_accuracy=min_refusal_accuracy,
             max_p95_latency_ms=max_p95_latency_ms,
             max_p95_token_estimate=max_p95_token_estimate,
+            evaluation_strategy=evaluation_strategy,
+            embedding_client=embedding_client,
+            llm_client=llm_client,
         )
         benchmark_runs.append(BenchmarkRun(run_id=run_id, summary=summary, cases=cases))
 
@@ -842,6 +863,7 @@ def write_artifacts(
         f"- p95 token estimate: {summary.p95_token_estimate}",
         f"- Max p95 latency budget: {summary.max_p95_latency_ms}",
         f"- Max p95 token budget: {summary.max_p95_token_estimate}",
+        f"- Evaluation strategy: {summary.provenance.evaluation_strategy}",
         f"- Benchmark fingerprint: {summary.provenance.fingerprint}",
         f"- Corpus SHA-256: {summary.provenance.corpus_sha256}",
         (
@@ -936,6 +958,7 @@ def write_benchmark_artifacts(
         f"- Worst-run p95 token estimate: {summary.worst_run_p95_token_estimate}",
         f"- Max p95 latency budget: {summary.max_p95_latency_ms}",
         f"- Max p95 token budget: {summary.max_p95_token_estimate}",
+        f"- Evaluation strategy: {summary.provenance.evaluation_strategy}",
         f"- Benchmark fingerprint: {summary.provenance.fingerprint}",
         f"- Corpus SHA-256: {summary.provenance.corpus_sha256}",
         (
