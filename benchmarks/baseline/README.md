@@ -66,8 +66,12 @@ The gate first validates baseline integrity, then:
 - requires matching benchmark provenance fingerprints;
 - compares aggregate quality and performance metrics;
 - compares per-query cases by query text;
-- fails on quality regressions, increased p95 latency/token usage, missing
-  baseline queries, or a pass-to-fail transition.
+- fails on quality regressions, token-usage increases, material p95 latency
+  regressions beyond the configured tolerance, missing baseline queries, or a
+  pass-to-fail transition.
+
+The default latency tolerance is `max(1 ms, 10% of baseline p95)`; this prevents
+scheduler/runtime noise from making the deterministic benchmark gate flaky.
 
 If the corpus, golden set, refusal set, or chunking configuration changes, the
 fingerprint changes. In that situation, review the new benchmark and promote a
