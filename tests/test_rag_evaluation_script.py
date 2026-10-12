@@ -753,3 +753,61 @@ def test_benchmark_provenance_changes_with_evaluation_model() -> None:
     )
 
     assert first.fingerprint != second.fingerprint
+
+
+def test_benchmark_comparison_ignores_small_latency_noise(tmp_path: Path) -> None:
+    baseline_path = tmp_path / "baseline.json"
+    candidate_path = tmp_path / "candidate.json"
+    baseline_payload = _benchmark_summary_payload(fingerprint="d" * 64)
+    candidate_payload = dict(baseline_payload)
+    candidate_payload["worst_run_p95_latency_ms"] = 10.4
+    baseline_path.write_text(json.dumps(baseline_payload), encoding="utf-8")
+    candidate_path.write_text(json.dumps(candidate_payload), encoding="utf-8")
+
+    comparison = evaluate_rag.compare_benchmark_summaries(
+        baseline=evaluate_rag.load_benchmark_summary(baseline_path),
+        candidate=evaluate_rag.load_benchmark_summary(candidate_path),
+        baseline_path=baseline_path,
+        candidate_path=candidate_path,
+    )
+
+    assert comparison.p95_latency_ms_delta == pytest.approx(0.4)
+    assert "p95_latency_ms" not in comparison.regressions
+
+
+def test_benchmark_comparison_flags_material_latency_regression(tmp_path: Path) -> None:
+    baseline_path = tmp_path / "baseline.json"
+    candidate_path = tmp_path / "candidate.json"
+    baseline_payload = _benchmark_summary_payload(fingerprint="d" * 64)
+    candidate_payload = dict(baseline_payload)
+    candidate_payload["worst_run_p95_latency_ms"] = 13.0
+    baseline_path.write_text(json.dumps(baseline_payload), encoding="utf-8")
+    candidate_path.write_text(json.dumps(candidate_payload), encoding="utf-8")
+
+    comparison = evaluate_rag.compare_benchmark_summaries(
+        baseline=evaluate_rag.load_benchmark_summary(baseline_path),
+        candidate=evaluate_rag.load_benchmark_summary(candidate_path),
+        baseline_path=baseline_path,
+        candidate_path=candidate_path,
+    )
+
+    assert "p95_latency_ms" in comparison.regressions
+
+
+def test_benchmark_comparison_keeps_token_regressions_strict(tmp_path: Path) -> None:
+    baseline_path = tmp_path / "baseline.json"
+    candidate_path = tmp_path / "candidate.json"
+    baseline_payload = _benchmark_summary_payload(fingerprint="d" * 64)
+    candidate_payload = dict(baseline_payload)
+    candidate_payload["worst_run_p95_token_estimate"] = 101
+    baseline_path.write_text(json.dumps(baseline_payload), encoding="utf-8")
+    candidate_path.write_text(json.dumps(candidate_payload), encoding="utf-8")
+
+    comparison = evaluate_rag.compare_benchmark_summaries(
+        baseline=evaluate_rag.load_benchmark_summary(baseline_path),
+        candidate=evaluate_rag.load_benchmark_summary(candidate_path),
+        baseline_path=baseline_path,
+        candidate_path=candidate_path,
+    )
+
+    assert "p95_token_estimate" in comparison.regressions
