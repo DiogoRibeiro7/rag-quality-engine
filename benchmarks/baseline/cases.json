@@ -1,0 +1,1099 @@
+[
+  {
+    "query": "What does the BM25 k1 parameter control?",
+    "retrieved_chunk_ids": [
+      "lexical-retrieval:1",
+      "lexical-retrieval:2"
+    ],
+    "relevant_chunk_ids": [
+      "lexical-retrieval:1"
+    ],
+    "expected_unanswerable": false,
+    "recall_at_k": 1.0,
+    "reciprocal_rank": 1.0,
+    "latency_ms": 0.5943789999918181,
+    "token_estimate": 132,
+    "answer": {
+      "question": "What does the BM25 k1 parameter control?",
+      "answer_text": "unfairly rewarded for containing more words",
+      "citations": [
+        "lexical-retrieval:1"
+      ],
+      "model_name": "heuristic-grounded",
+      "refusal": false,
+      "grounded": true,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: What does the BM25 k1 parameter control?\nContexts:\n[lexical-retrieval:1] unfairly rewarded for containing more words.\n\nBM25 exposes two tuning parameters. The k1 parameter controls how quickly term-frequency saturates; typical values fall between 1.2 and 2.0. The b parameter controls how aggressively length normalisation is applied, where b equal to zero disables it and b equal to one applies it fully. A common default is k1 of 1.5 and b of 0.75.\n\nThe strength of\n[lexical-retrieval:2] common default is k1 of 1.5 and b of 0.75.\n\nThe strength of lexical retrieval is precision on rare keywords, identifiers, and exact phrases. Its weakness is vocabulary mismatch: a query for \"car\" will not match a passage that only says \"automobile\", because BM25 has no notion of meaning. This is the gap that vector retrieval is designed to close."
+    },
+    "evaluation": {
+      "context_precision": 0.5,
+      "context_recall": 1.0,
+      "answer_relevance": 0.0,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "unfairly rewarded for containing more words",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": "lexical-retrieval:1",
+          "matched_terms": [
+            "contain",
+            "reward",
+            "unfairly",
+            "word"
+          ],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.484785Z"
+    }
+  },
+  {
+    "query": "What are common default values for BM25 k1 and b?",
+    "retrieved_chunk_ids": [
+      "lexical-retrieval:1",
+      "lexical-retrieval:2"
+    ],
+    "relevant_chunk_ids": [
+      "lexical-retrieval:1",
+      "lexical-retrieval:2"
+    ],
+    "expected_unanswerable": false,
+    "recall_at_k": 1.0,
+    "reciprocal_rank": 1.0,
+    "latency_ms": 0.3721220000016956,
+    "token_estimate": 132,
+    "answer": {
+      "question": "What are common default values for BM25 k1 and b?",
+      "answer_text": "unfairly rewarded for containing more words",
+      "citations": [
+        "lexical-retrieval:1"
+      ],
+      "model_name": "heuristic-grounded",
+      "refusal": false,
+      "grounded": true,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: What are common default values for BM25 k1 and b?\nContexts:\n[lexical-retrieval:1] unfairly rewarded for containing more words.\n\nBM25 exposes two tuning parameters. The k1 parameter controls how quickly term-frequency saturates; typical values fall between 1.2 and 2.0. The b parameter controls how aggressively length normalisation is applied, where b equal to zero disables it and b equal to one applies it fully. A common default is k1 of 1.5 and b of 0.75.\n\nThe strength of\n[lexical-retrieval:2] common default is k1 of 1.5 and b of 0.75.\n\nThe strength of lexical retrieval is precision on rare keywords, identifiers, and exact phrases. Its weakness is vocabulary mismatch: a query for \"car\" will not match a passage that only says \"automobile\", because BM25 has no notion of meaning. This is the gap that vector retrieval is designed to close."
+    },
+    "evaluation": {
+      "context_precision": 1.0,
+      "context_recall": 1.0,
+      "answer_relevance": 0.1,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "unfairly rewarded for containing more words",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": "lexical-retrieval:1",
+          "matched_terms": [
+            "contain",
+            "reward",
+            "unfairly",
+            "word"
+          ],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.485166Z"
+    }
+  },
+  {
+    "query": "What is the main weakness of lexical retrieval?",
+    "retrieved_chunk_ids": [
+      "vector-retrieval:2",
+      "lexical-retrieval:2"
+    ],
+    "relevant_chunk_ids": [
+      "lexical-retrieval:2"
+    ],
+    "expected_unanswerable": false,
+    "recall_at_k": 1.0,
+    "reciprocal_rank": 0.5,
+    "latency_ms": 0.35128099999326423,
+    "token_estimate": 122,
+    "answer": {
+      "question": "What is the main weakness of lexical retrieval?",
+      "answer_text": "expensive at scale, production systems use approximate nearest neighbour search",
+      "citations": [
+        "vector-retrieval:2"
+      ],
+      "model_name": "heuristic-grounded",
+      "refusal": false,
+      "grounded": true,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: What is the main weakness of lexical retrieval?\nContexts:\n[vector-retrieval:2] expensive at scale, production systems use approximate nearest neighbour search. Index structures such as HNSW graphs and inverted file indexes trade a small amount of recall for a large gain in latency. The main weakness of vector retrieval is the opposite of lexical search: it can miss exact keyword matches and rare identifiers, retrieving passages that are merely topically related.\n[lexical-retrieval:2] common default is k1 of 1.5 and b of 0.75.\n\nThe strength of lexical retrieval is precision on rare keywords, identifiers, and exact phrases. Its weakness is vocabulary mismatch: a query for \"car\" will not match a passage that only says \"automobile\", because BM25 has no notion of meaning. This is the gap that vector retrieval is designed to close."
+    },
+    "evaluation": {
+      "context_precision": 0.5,
+      "context_recall": 1.0,
+      "answer_relevance": 0.0,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "expensive at scale, production systems use approximate nearest neighbour search",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": "vector-retrieval:2",
+          "matched_terms": [
+            "approximate",
+            "expensive",
+            "nearest",
+            "neighbour",
+            "production",
+            "scale",
+            "search",
+            "system",
+            "use"
+          ],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.485523Z"
+    }
+  },
+  {
+    "query": "Which similarity metric is standard for comparing embeddings?",
+    "retrieved_chunk_ids": [
+      "vector-retrieval:1",
+      "vector-retrieval:0"
+    ],
+    "relevant_chunk_ids": [
+      "vector-retrieval:0"
+    ],
+    "expected_unanswerable": false,
+    "recall_at_k": 1.0,
+    "reciprocal_rank": 0.5,
+    "latency_ms": 0.33622799999477593,
+    "token_estimate": 123,
+    "answer": {
+      "question": "Which similarity metric is standard for comparing embeddings?",
+      "answer_text": "scoring metric for embeddings",
+      "citations": [
+        "vector-retrieval:1"
+      ],
+      "model_name": "heuristic-grounded",
+      "refusal": false,
+      "grounded": true,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: Which similarity metric is standard for comparing embeddings?\nContexts:\n[vector-retrieval:1] scoring metric for embeddings. It measures the angle between two vectors and ignores their magnitude, which makes it robust to differences in passage length. Scores range from minus one to one, and normalised embeddings let cosine similarity be computed as a simple dot product.\n\nBecause comparing a query against every stored vector is expensive at scale, production systems use approximate nearest\n[vector-retrieval:0] # Vector Retrieval and Embeddings\n\nVector retrieval represents text as dense embeddings and ranks passages by similarity in that vector space. An embedding model maps a chunk of text to a fixed-length vector so that semantically related passages land close together, even when they share no words.\n\nCosine similarity is the standard scoring metric for embeddings. It measures the angle between two"
+    },
+    "evaluation": {
+      "context_precision": 0.5,
+      "context_recall": 1.0,
+      "answer_relevance": 0.375,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "scoring metric for embeddings",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": "vector-retrieval:1",
+          "matched_terms": [
+            "embedding",
+            "metric",
+            "scor"
+          ],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.485864Z"
+    }
+  },
+  {
+    "query": "Why do vector systems use approximate nearest neighbour search?",
+    "retrieved_chunk_ids": [
+      "vector-retrieval:2",
+      "vector-retrieval:1"
+    ],
+    "relevant_chunk_ids": [
+      "vector-retrieval:1"
+    ],
+    "expected_unanswerable": false,
+    "recall_at_k": 1.0,
+    "reciprocal_rank": 0.5,
+    "latency_ms": 0.28212600000188104,
+    "token_estimate": 121,
+    "answer": {
+      "question": "Why do vector systems use approximate nearest neighbour search?",
+      "answer_text": "expensive at scale, production systems use approximate nearest neighbour search",
+      "citations": [
+        "vector-retrieval:2"
+      ],
+      "model_name": "heuristic-grounded",
+      "refusal": false,
+      "grounded": true,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: Why do vector systems use approximate nearest neighbour search?\nContexts:\n[vector-retrieval:2] expensive at scale, production systems use approximate nearest neighbour search. Index structures such as HNSW graphs and inverted file indexes trade a small amount of recall for a large gain in latency. The main weakness of vector retrieval is the opposite of lexical search: it can miss exact keyword matches and rare identifiers, retrieving passages that are merely topically related.\n[vector-retrieval:1] scoring metric for embeddings. It measures the angle between two vectors and ignores their magnitude, which makes it robust to differences in passage length. Scores range from minus one to one, and normalised embeddings let cosine similarity be computed as a simple dot product.\n\nBecause comparing a query against every stored vector is expensive at scale, production systems use approximate nearest"
+    },
+    "evaluation": {
+      "context_precision": 0.5,
+      "context_recall": 1.0,
+      "answer_relevance": 0.6666666666666666,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "expensive at scale, production systems use approximate nearest neighbour search",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": "vector-retrieval:2",
+          "matched_terms": [
+            "approximate",
+            "expensive",
+            "nearest",
+            "neighbour",
+            "production",
+            "scale",
+            "search",
+            "system",
+            "use"
+          ],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.486150Z"
+    }
+  },
+  {
+    "query": "How does the alpha weight blend scores in hybrid retrieval?",
+    "retrieved_chunk_ids": [
+      "hybrid-retrieval:1",
+      "hybrid-retrieval:0"
+    ],
+    "relevant_chunk_ids": [
+      "hybrid-retrieval:1"
+    ],
+    "expected_unanswerable": false,
+    "recall_at_k": 1.0,
+    "reciprocal_rank": 1.0,
+    "latency_ms": 0.3118019999988064,
+    "token_estimate": 128,
+    "answer": {
+      "question": "How does the alpha weight blend scores in hybrid retrieval?",
+      "answer_text": "fusion",
+      "citations": [
+        "hybrid-retrieval:1"
+      ],
+      "model_name": "heuristic-grounded",
+      "refusal": false,
+      "grounded": true,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: How does the alpha weight blend scores in hybrid retrieval?\nContexts:\n[hybrid-retrieval:1] fusion. Each retriever's scores are normalised to a comparable range, then blended with a weight alpha, so the final score is alpha times the lexical score plus one minus alpha times the vector score. Setting alpha to one recovers pure lexical search and setting it to zero recovers pure vector search, which makes alpha a single knob for tuning the trade-off.\n\nAn alternative is Reciprocal Rank\n[hybrid-retrieval:0] # Hybrid Retrieval\n\nHybrid retrieval combines lexical and vector scores so that a system benefits from exact keyword matching and semantic recall at the same time. The lexical component anchors rare terms and identifiers, while the vector component closes the vocabulary-mismatch gap.\n\nA simple and effective strategy is weighted score fusion. Each retriever's scores are normalised to a comparable"
+    },
+    "evaluation": {
+      "context_precision": 0.5,
+      "context_recall": 1.0,
+      "answer_relevance": 0.0,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "fusion",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": "hybrid-retrieval:1",
+          "matched_terms": [
+            "fusion"
+          ],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.486466Z"
+    }
+  },
+  {
+    "query": "What is Reciprocal Rank Fusion?",
+    "retrieved_chunk_ids": [
+      "hybrid-retrieval:2",
+      "hybrid-retrieval:1"
+    ],
+    "relevant_chunk_ids": [
+      "hybrid-retrieval:2"
+    ],
+    "expected_unanswerable": false,
+    "recall_at_k": 1.0,
+    "reciprocal_rank": 1.0,
+    "latency_ms": 0.2759580000031292,
+    "token_estimate": 121,
+    "answer": {
+      "question": "What is Reciprocal Rank Fusion?",
+      "answer_text": "for tuning the trade-off",
+      "citations": [
+        "hybrid-retrieval:2"
+      ],
+      "model_name": "heuristic-grounded",
+      "refusal": false,
+      "grounded": true,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: What is Reciprocal Rank Fusion?\nContexts:\n[hybrid-retrieval:2] for tuning the trade-off.\n\nAn alternative is Reciprocal Rank Fusion, which combines ranked lists using the reciprocal of each item's rank rather than its raw score. Rank fusion avoids the need to calibrate score scales across retrievers and is often more stable when the two systems produce very different score distributions.\n[hybrid-retrieval:1] fusion. Each retriever's scores are normalised to a comparable range, then blended with a weight alpha, so the final score is alpha times the lexical score plus one minus alpha times the vector score. Setting alpha to one recovers pure lexical search and setting it to zero recovers pure vector search, which makes alpha a single knob for tuning the trade-off.\n\nAn alternative is Reciprocal Rank"
+    },
+    "evaluation": {
+      "context_precision": 0.5,
+      "context_recall": 1.0,
+      "answer_relevance": 0.0,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "for tuning the trade-off",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": "hybrid-retrieval:2",
+          "matched_terms": [
+            "off",
+            "trade",
+            "tuning"
+          ],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.486746Z"
+    }
+  },
+  {
+    "query": "What is the trade-off between small and large chunks?",
+    "retrieved_chunk_ids": [
+      "vector-retrieval:2",
+      "chunking-strategies:0"
+    ],
+    "relevant_chunk_ids": [
+      "chunking-strategies:0"
+    ],
+    "expected_unanswerable": false,
+    "recall_at_k": 1.0,
+    "reciprocal_rank": 0.5,
+    "latency_ms": 0.3440700000112429,
+    "token_estimate": 124,
+    "answer": {
+      "question": "What is the trade-off between small and large chunks?",
+      "answer_text": "expensive at scale, production systems use approximate nearest neighbour search",
+      "citations": [
+        "vector-retrieval:2"
+      ],
+      "model_name": "heuristic-grounded",
+      "refusal": false,
+      "grounded": true,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: What is the trade-off between small and large chunks?\nContexts:\n[vector-retrieval:2] expensive at scale, production systems use approximate nearest neighbour search. Index structures such as HNSW graphs and inverted file indexes trade a small amount of recall for a large gain in latency. The main weakness of vector retrieval is the opposite of lexical search: it can miss exact keyword matches and rare identifiers, retrieving passages that are merely topically related.\n[chunking-strategies:0] # Chunking Strategies\n\nChunking splits documents into passages small enough to retrieve precisely and to fit inside a model's context window. The chunk size and the overlap between adjacent chunks are the two parameters that most affect retrieval quality.\n\nSmall chunks improve precision because each passage covers a single idea, so a retrieved chunk is more likely to be fully relevant. The cost is"
+    },
+    "evaluation": {
+      "context_precision": 0.5,
+      "context_recall": 1.0,
+      "answer_relevance": 0.0,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "expensive at scale, production systems use approximate nearest neighbour search",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": "vector-retrieval:2",
+          "matched_terms": [
+            "approximate",
+            "expensive",
+            "nearest",
+            "neighbour",
+            "production",
+            "scale",
+            "search",
+            "system",
+            "use"
+          ],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.487094Z"
+    }
+  },
+  {
+    "query": "Why is overlap used when chunking documents?",
+    "retrieved_chunk_ids": [
+      "chunking-strategies:0",
+      "chunking-strategies:2"
+    ],
+    "relevant_chunk_ids": [
+      "chunking-strategies:1"
+    ],
+    "expected_unanswerable": false,
+    "recall_at_k": 0.0,
+    "reciprocal_rank": 0.0,
+    "latency_ms": 0.30718399999329904,
+    "token_estimate": 127,
+    "answer": {
+      "question": "Why is overlap used when chunking documents?",
+      "answer_text": "# Chunking Strategies\n\nChunking splits documents into passages small enough to retrieve precisely and to fit inside a model's context window",
+      "citations": [
+        "chunking-strategies:0"
+      ],
+      "model_name": "heuristic-grounded",
+      "refusal": false,
+      "grounded": true,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: Why is overlap used when chunking documents?\nContexts:\n[chunking-strategies:0] # Chunking Strategies\n\nChunking splits documents into passages small enough to retrieve precisely and to fit inside a model's context window. The chunk size and the overlap between adjacent chunks are the two parameters that most affect retrieval quality.\n\nSmall chunks improve precision because each passage covers a single idea, so a retrieved chunk is more likely to be fully relevant. The cost is\n[chunking-strategies:2] boundary effects by repeating a window of text between neighbouring chunks, so a fact that sits at a boundary still appears intact in at least one chunk. Typical configurations use an overlap of ten to twenty percent of the chunk size. Chunking can operate on characters, tokens, or semantic units such as sentences and paragraphs; sentence-aware chunking usually preserves meaning better than"
+    },
+    "evaluation": {
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevance": 0.2857142857142857,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "# Chunking Strategies Chunking splits documents into passages small enough to retrieve precisely and to fit inside a model's context window",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": "chunking-strategies:0",
+          "matched_terms": [
+            "chunk",
+            "context",
+            "document",
+            "enough",
+            "fit",
+            "inside",
+            "model",
+            "passag",
+            "precisely",
+            "retrieve",
+            "s",
+            "small",
+            "split",
+            "strategy",
+            "window"
+          ],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.487405Z"
+    }
+  },
+  {
+    "query": "What does recall at k measure?",
+    "retrieved_chunk_ids": [
+      "rag-evaluation:0",
+      "prompt-design:3"
+    ],
+    "relevant_chunk_ids": [
+      "rag-evaluation:0"
+    ],
+    "expected_unanswerable": false,
+    "recall_at_k": 1.0,
+    "reciprocal_rank": 1.0,
+    "latency_ms": 0.2630670000058899,
+    "token_estimate": 85,
+    "answer": {
+      "question": "What does recall at k measure?",
+      "answer_text": "# RAG Evaluation\n\nRAG evaluation should measure retrieval quality and answer quality separately, because a good answer depends first on retrieving the right evidence and then on using it faithfully",
+      "citations": [
+        "rag-evaluation:0"
+      ],
+      "model_name": "heuristic-grounded",
+      "refusal": false,
+      "grounded": true,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: What does recall at k measure?\nContexts:\n[rag-evaluation:0] # RAG Evaluation\n\nRAG evaluation should measure retrieval quality and answer quality separately, because a good answer depends first on retrieving the right evidence and then on using it faithfully.\n\nRetrieval metrics judge the ranked list of chunks. Recall at k measures whether the relevant chunks appear in the top k results, and is the metric to watch when a downstream generator can tolerate\n[prompt-design:3] it is both cited and not a refusal. A strict output contract is what lets evaluation run automatically over thousands of answers."
+    },
+    "evaluation": {
+      "context_precision": 0.5,
+      "context_recall": 1.0,
+      "answer_relevance": 0.16666666666666666,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "# RAG Evaluation RAG evaluation should measure retrieval quality and answer quality separately, because a good answer depends first on retrieving the right evidence and then on using it faithfully",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": "rag-evaluation:0",
+          "matched_terms": [
+            "answer",
+            "depend",
+            "evaluation",
+            "evidence",
+            "faithfully",
+            "first",
+            "good",
+            "measure",
+            "quality",
+            "rag",
+            "retriev",
+            "retrieval",
+            "right",
+            "separately",
+            "using"
+          ],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.487671Z"
+    }
+  },
+  {
+    "query": "What does faithfulness measure in a RAG answer?",
+    "retrieved_chunk_ids": [
+      "rag-evaluation:0",
+      "faithfulness-grounding:0"
+    ],
+    "relevant_chunk_ids": [
+      "rag-evaluation:2"
+    ],
+    "expected_unanswerable": false,
+    "recall_at_k": 0.0,
+    "reciprocal_rank": 0.0,
+    "latency_ms": 0.3184109999949669,
+    "token_estimate": 126,
+    "answer": {
+      "question": "What does faithfulness measure in a RAG answer?",
+      "answer_text": "# RAG Evaluation\n\nRAG evaluation should measure retrieval quality and answer quality separately, because a good answer depends first on retrieving the right evidence and then on using it faithfully",
+      "citations": [
+        "rag-evaluation:0"
+      ],
+      "model_name": "heuristic-grounded",
+      "refusal": false,
+      "grounded": true,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: What does faithfulness measure in a RAG answer?\nContexts:\n[rag-evaluation:0] # RAG Evaluation\n\nRAG evaluation should measure retrieval quality and answer quality separately, because a good answer depends first on retrieving the right evidence and then on using it faithfully.\n\nRetrieval metrics judge the ranked list of chunks. Recall at k measures whether the relevant chunks appear in the top k results, and is the metric to watch when a downstream generator can tolerate\n[faithfulness-grounding:0] # Faithfulness and Grounding\n\nGrounding is the discipline of making a language model answer only from supplied evidence rather than from its parametric memory. A grounded RAG system passes retrieved context into the prompt and instructs the model to use nothing else, which keeps answers traceable to a source.\n\nFaithfulness is the property that every claim in an answer is entailed by the retrieved"
+    },
+    "evaluation": {
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevance": 0.5,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "# RAG Evaluation RAG evaluation should measure retrieval quality and answer quality separately, because a good answer depends first on retrieving the right evidence and then on using it faithfully",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": "rag-evaluation:0",
+          "matched_terms": [
+            "answer",
+            "depend",
+            "evaluation",
+            "evidence",
+            "faithfully",
+            "first",
+            "good",
+            "measure",
+            "quality",
+            "rag",
+            "retriev",
+            "retrieval",
+            "right",
+            "separately",
+            "using"
+          ],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.487993Z"
+    }
+  },
+  {
+    "query": "What is a hallucination?",
+    "retrieved_chunk_ids": [
+      "prompt-design:3",
+      "faithfulness-grounding:1"
+    ],
+    "relevant_chunk_ids": [
+      "faithfulness-grounding:1"
+    ],
+    "expected_unanswerable": false,
+    "recall_at_k": 1.0,
+    "reciprocal_rank": 0.5,
+    "latency_ms": 0.2708100000035074,
+    "token_estimate": 86,
+    "answer": {
+      "question": "What is a hallucination?",
+      "answer_text": "property that every claim in an answer is entailed by the retrieved context",
+      "citations": [
+        "faithfulness-grounding:1"
+      ],
+      "model_name": "heuristic-grounded",
+      "refusal": false,
+      "grounded": true,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: What is a hallucination?\nContexts:\n[prompt-design:3] it is both cited and not a refusal. A strict output contract is what lets evaluation run automatically over thousands of answers.\n[faithfulness-grounding:1] property that every claim in an answer is entailed by the retrieved context. A hallucination is an unfaithful claim: a statement that is fluent and plausible but unsupported by the evidence. Faithfulness can be estimated by decomposing an answer into atomic claims and checking each one against the context, either with lexical overlap heuristics or with a model acting as a judge.\n\nCitations make"
+    },
+    "evaluation": {
+      "context_precision": 0.5,
+      "context_recall": 1.0,
+      "answer_relevance": 0.25,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "property that every claim in an answer is entailed by the retrieved context",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": "faithfulness-grounding:1",
+          "matched_terms": [
+            "answer",
+            "claim",
+            "context",
+            "entail",
+            "every",
+            "property",
+            "retriev"
+          ],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.488267Z"
+    }
+  },
+  {
+    "query": "Which architecture dominates reranking?",
+    "retrieved_chunk_ids": [
+      "reranking:0",
+      "reranking:1"
+    ],
+    "relevant_chunk_ids": [
+      "reranking:0"
+    ],
+    "expected_unanswerable": false,
+    "recall_at_k": 1.0,
+    "reciprocal_rank": 1.0,
+    "latency_ms": 0.2536339999892334,
+    "token_estimate": 120,
+    "answer": {
+      "question": "Which architecture dominates reranking?",
+      "answer_text": "# Reranking\n\nReranking adds a second, more accurate scoring stage after an initial retriever returns a candidate set",
+      "citations": [
+        "reranking:0"
+      ],
+      "model_name": "heuristic-grounded",
+      "refusal": false,
+      "grounded": true,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: Which architecture dominates reranking?\nContexts:\n[reranking:0] # Reranking\n\nReranking adds a second, more accurate scoring stage after an initial retriever returns a candidate set. The first stage optimises for recall and speed, pulling perhaps the top fifty chunks cheaply; the reranker then reorders that shortlist for precision before the chunks reach the generator.\n\nThe dominant reranking architecture is the cross-encoder. Unlike a bi-encoder, which embeds\n[reranking:1] architecture is the cross-encoder. Unlike a bi-encoder, which embeds the query and each passage independently, a cross-encoder reads the query and a passage together and scores their relevance jointly. This joint attention captures fine-grained interactions that independent embeddings miss, which makes cross-encoders markedly more accurate.\n\nThe cost of that accuracy is latency, because the model"
+    },
+    "evaluation": {
+      "context_precision": 0.5,
+      "context_recall": 1.0,
+      "answer_relevance": 0.25,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "# Reranking Reranking adds a second, more accurate scoring stage after an initial retriever returns a candidate set",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": "reranking:0",
+          "matched_terms": [
+            "accurate",
+            "adds",
+            "candidate",
+            "initial",
+            "rerank",
+            "retriever",
+            "return",
+            "scor",
+            "second",
+            "set",
+            "stage"
+          ],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.488524Z"
+    }
+  },
+  {
+    "query": "What does a trace record in an LLMOps system?",
+    "retrieved_chunk_ids": [
+      "llmops-observability:0",
+      "prompt-design:3"
+    ],
+    "relevant_chunk_ids": [
+      "llmops-observability:0"
+    ],
+    "expected_unanswerable": false,
+    "recall_at_k": 1.0,
+    "reciprocal_rank": 1.0,
+    "latency_ms": 0.3208549999982324,
+    "token_estimate": 81,
+    "answer": {
+      "question": "What does a trace record in an LLMOps system?",
+      "answer_text": "# LLMOps and Observability\n\nLLMOps applies operational discipline to systems built on language models, treating prompts, retrieval, and generation as components that must be monitored, tested, and improved over time rather than wired together once",
+      "citations": [
+        "llmops-observability:0"
+      ],
+      "model_name": "heuristic-grounded",
+      "refusal": false,
+      "grounded": true,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: What does a trace record in an LLMOps system?\nContexts:\n[llmops-observability:0] # LLMOps and Observability\n\nLLMOps applies operational discipline to systems built on language models, treating prompts, retrieval, and generation as components that must be monitored, tested, and improved over time rather than wired together once.\n\nTracing is the foundation. A trace records the full path of a request: the query, the retrieved chunks and their scores, the rendered prompt, the\n[prompt-design:3] it is both cited and not a refusal. A strict output contract is what lets evaluation run automatically over thousands of answers."
+    },
+    "evaluation": {
+      "context_precision": 0.5,
+      "context_recall": 1.0,
+      "answer_relevance": 0.1111111111111111,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "# LLMOps and Observability LLMOps applies operational discipline to systems built on language models, treating prompts, retrieval, and generation as components that must be monitored, tested, and improved over time rather than wired together once",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": "llmops-observability:0",
+          "matched_terms": [
+            "apply",
+            "built",
+            "component",
+            "discipline",
+            "generation",
+            "improv",
+            "language",
+            "llmop",
+            "model",
+            "monitor",
+            "must",
+            "observability",
+            "operational",
+            "prompt",
+            "rather",
+            "retrieval",
+            "system",
+            "test",
+            "time",
+            "together",
+            "treat",
+            "wired"
+          ],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.488849Z"
+    }
+  },
+  {
+    "query": "What should a grounding system instruction tell the model?",
+    "retrieved_chunk_ids": [
+      "prompt-design:0",
+      "prompt-design:1"
+    ],
+    "relevant_chunk_ids": [
+      "prompt-design:1"
+    ],
+    "expected_unanswerable": false,
+    "recall_at_k": 1.0,
+    "reciprocal_rank": 0.5,
+    "latency_ms": 0.3214860000042563,
+    "token_estimate": 124,
+    "answer": {
+      "question": "What should a grounding system instruction tell the model?",
+      "answer_text": "# Prompt Design for Grounded Generation\n\nThe prompt is the contract between a retrieval system and the language model",
+      "citations": [
+        "prompt-design:0"
+      ],
+      "model_name": "heuristic-grounded",
+      "refusal": false,
+      "grounded": true,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: What should a grounding system instruction tell the model?\nContexts:\n[prompt-design:0] # Prompt Design for Grounded Generation\n\nThe prompt is the contract between a retrieval system and the language model. For grounded generation it must do three things: supply the retrieved evidence, constrain the model to use only that evidence, and specify the exact output format the system expects.\n\nA system instruction sets the rules. A typical grounding instruction tells the model to answer\n[prompt-design:1] rules. A typical grounding instruction tells the model to answer only from the provided contexts, to cite the chunk identifiers it relied on, and to refuse when the evidence is insufficient. Placing each context behind its identifier lets the model reference sources precisely and lets the system validate the citations it returns.\n\nStructured output makes generation safe to parse. Asking the model"
+    },
+    "evaluation": {
+      "context_precision": 0.5,
+      "context_recall": 1.0,
+      "answer_relevance": 0.4444444444444444,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "# Prompt Design for Grounded Generation The prompt is the contract between a retrieval system and the language model",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": "prompt-design:0",
+          "matched_terms": [
+            "contract",
+            "design",
+            "generation",
+            "ground",
+            "language",
+            "model",
+            "prompt",
+            "retrieval",
+            "system"
+          ],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.489173Z"
+    }
+  },
+  {
+    "query": "Why ask the model to return structured JSON output?",
+    "retrieved_chunk_ids": [
+      "prompt-design:2",
+      "prompt-design:1"
+    ],
+    "relevant_chunk_ids": [
+      "prompt-design:2"
+    ],
+    "expected_unanswerable": false,
+    "recall_at_k": 1.0,
+    "reciprocal_rank": 1.0,
+    "latency_ms": 0.3078459999983352,
+    "token_estimate": 132,
+    "answer": {
+      "question": "Why ask the model to return structured JSON output?",
+      "answer_text": "Structured output makes generation safe to parse",
+      "citations": [
+        "prompt-design:2"
+      ],
+      "model_name": "heuristic-grounded",
+      "refusal": false,
+      "grounded": true,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: Why ask the model to return structured JSON output?\nContexts:\n[prompt-design:2] Structured output makes generation safe to parse. Asking the model to return JSON with an answer, a list of citations, and a refusal flag turns a free-form response into a checkable object. The system can then validate the schema, reject citations that point to chunks which were never retrieved, and mark an answer as grounded only when it is both cited and not a refusal. A strict output contract\n[prompt-design:1] rules. A typical grounding instruction tells the model to answer only from the provided contexts, to cite the chunk identifiers it relied on, and to refuse when the evidence is insufficient. Placing each context behind its identifier lets the model reference sources precisely and lets the system validate the citations it returns.\n\nStructured output makes generation safe to parse. Asking the model"
+    },
+    "evaluation": {
+      "context_precision": 0.5,
+      "context_recall": 1.0,
+      "answer_relevance": 0.3333333333333333,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "Structured output makes generation safe to parse",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": "prompt-design:2",
+          "matched_terms": [
+            "generation",
+            "make",
+            "output",
+            "parse",
+            "safe",
+            "structur"
+          ],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.489485Z"
+    }
+  },
+  {
+    "query": "What is the capital of France?",
+    "retrieved_chunk_ids": [
+      "prompt-design:3",
+      "llmops-observability:2"
+    ],
+    "relevant_chunk_ids": [],
+    "expected_unanswerable": true,
+    "recall_at_k": 0.0,
+    "reciprocal_rank": 0.0,
+    "latency_ms": 0.2687970000039286,
+    "token_estimate": 84,
+    "answer": {
+      "question": "What is the capital of France?",
+      "answer_text": "I do not have enough evidence to answer.",
+      "citations": [],
+      "model_name": "heuristic-grounded",
+      "refusal": true,
+      "grounded": false,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: What is the capital of France?\nContexts:\n[prompt-design:3] it is both cited and not a refusal. A strict output contract is what lets evaluation run automatically over thousands of answers.\n[llmops-observability:2] budgets. End-to-end latency determines whether the system is usable interactively, and token usage drives cost per answer. Both should be tracked as distributions, not averages, because tail latency and worst-case cost are what break production. Regression testing closes the loop: a golden dataset is evaluated on every change, and the build fails when faithfulness or citation support drops below"
+    },
+    "evaluation": {
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevance": 0.0,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "I do not have enough evidence to answer.",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": null,
+          "matched_terms": [],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.489756Z"
+    }
+  },
+  {
+    "query": "Which planet has the tallest mountain in the solar system?",
+    "retrieved_chunk_ids": [
+      "photosynthesis:0",
+      "llmops-observability:1"
+    ],
+    "relevant_chunk_ids": [],
+    "expected_unanswerable": true,
+    "recall_at_k": 0.0,
+    "reciprocal_rank": 0.0,
+    "latency_ms": 0.2643800000043939,
+    "token_estimate": 116,
+    "answer": {
+      "question": "Which planet has the tallest mountain in the solar system?",
+      "answer_text": "I do not have enough evidence to answer.",
+      "citations": [],
+      "model_name": "heuristic-grounded",
+      "refusal": true,
+      "grounded": false,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: Which planet has the tallest mountain in the solar system?\nContexts:\n[photosynthesis:0] # Photosynthesis\n\nPhotosynthesis is the process by which green plants, algae, and some bacteria convert light energy into chemical energy stored in sugars. It takes place mainly in the chloroplasts, organelles that contain the green pigment chlorophyll.\n\nThe process has two stages. The light-dependent reactions occur in the thylakoid membranes, where chlorophyll absorbs sunlight and splits water\n[llmops-observability:1] retrieved chunks and their scores, the rendered prompt, the generated answer, and the latency and token counts at each step. With traces in hand, an engineer can reconstruct exactly why a particular answer was produced, which is essential for debugging hallucinations and regressions.\n\nOperational metrics turn traces into budgets. End-to-end latency determines whether the system is usable"
+    },
+    "evaluation": {
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevance": 0.0,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "I do not have enough evidence to answer.",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": null,
+          "matched_terms": [],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.490024Z"
+    }
+  },
+  {
+    "query": "What default API key should this project use for a hosted LLM provider?",
+    "retrieved_chunk_ids": [
+      "lexical-retrieval:2",
+      "llmops-observability:2"
+    ],
+    "relevant_chunk_ids": [],
+    "expected_unanswerable": true,
+    "recall_at_k": 0.0,
+    "reciprocal_rank": 0.0,
+    "latency_ms": 0.26359899999306435,
+    "token_estimate": 124,
+    "answer": {
+      "question": "What default API key should this project use for a hosted LLM provider?",
+      "answer_text": "I do not have enough evidence to answer.",
+      "citations": [],
+      "model_name": "heuristic-grounded",
+      "refusal": true,
+      "grounded": false,
+      "prompt": "Answer only using the provided contexts. Return valid JSON with answer_text, citations, and refusal. Cite chunk_ids exactly.\nQuestion: What default API key should this project use for a hosted LLM provider?\nContexts:\n[lexical-retrieval:2] common default is k1 of 1.5 and b of 0.75.\n\nThe strength of lexical retrieval is precision on rare keywords, identifiers, and exact phrases. Its weakness is vocabulary mismatch: a query for \"car\" will not match a passage that only says \"automobile\", because BM25 has no notion of meaning. This is the gap that vector retrieval is designed to close.\n[llmops-observability:2] budgets. End-to-end latency determines whether the system is usable interactively, and token usage drives cost per answer. Both should be tracked as distributions, not averages, because tail latency and worst-case cost are what break production. Regression testing closes the loop: a golden dataset is evaluated on every change, and the build fails when faithfulness or citation support drops below"
+    },
+    "evaluation": {
+      "context_precision": 0.0,
+      "context_recall": 0.0,
+      "answer_relevance": 0.0,
+      "faithfulness": 1.0,
+      "citation_support": 1.0,
+      "unsupported_claim_count": 0,
+      "claim_count": 1,
+      "supported_claim_count": 1,
+      "unsupported_claims": [],
+      "claim_support": [
+        {
+          "claim": "I do not have enough evidence to answer.",
+          "supported": true,
+          "score": 1.0,
+          "evidence_chunk_id": null,
+          "matched_terms": [],
+          "missing_terms": []
+        }
+      ],
+      "refusal_correct": true,
+      "notes": [],
+      "created_at": "2026-10-12T20:32:52.490291Z"
+    }
+  }
+]
