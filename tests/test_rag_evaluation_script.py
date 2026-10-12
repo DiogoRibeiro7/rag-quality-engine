@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+from ragops_lab.retrieval import FakeEmbeddingClient
+
 SCRIPT_PATH = Path("scripts/evaluate_rag.py")
 
 spec = importlib.util.spec_from_file_location("evaluate_rag", SCRIPT_PATH)
@@ -658,3 +660,46 @@ def test_validate_benchmark_baseline_rejects_duplicate_queries(tmp_path: Path) -
             cases_path=baseline_dir / "cases.json",
             manifest_path=baseline_dir / "manifest.json",
         )
+
+
+def test_benchmark_provenance_changes_with_evaluation_strategy() -> None:
+    lexical = evaluate_rag.build_benchmark_provenance(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        chunk_size=400,
+        overlap=60,
+        evaluation_strategy="lexical",
+    )
+    embedding = evaluate_rag.build_benchmark_provenance(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        chunk_size=400,
+        overlap=60,
+        evaluation_strategy="embedding",
+    )
+
+    assert lexical.evaluation_strategy == "lexical"
+    assert embedding.evaluation_strategy == "embedding"
+    assert lexical.fingerprint != embedding.fingerprint
+
+
+def test_benchmark_records_embedding_evaluation_strategy(tmp_path: Path) -> None:
+    summary, _ = evaluate_rag.run_benchmark(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        output_dir=tmp_path / "benchmark",
+        runs=1,
+        top_k=2,
+        chunk_size=400,
+        overlap=60,
+        min_faithfulness=0.0,
+        min_citation_support=0.0,
+        min_refusal_accuracy=0.0,
+        evaluation_strategy="embedding",
+        embedding_client=FakeEmbeddingClient(),
+    )
+
+    assert summary.provenance.evaluation_strategy == "embedding"
