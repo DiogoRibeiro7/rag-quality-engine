@@ -85,6 +85,8 @@ The repository includes a working local MVP with:
 - Added opt-in provider-backed LLM judges for relevance and claim-level support.
 - Added configurable lexical, embedding, and LLM evaluation strategies across
   normal CLI/API execution paths.
+- Added evaluation strategy to benchmark provenance so judge changes cannot be
+  mistaken for like-for-like regressions.
 - Added configurable embedding-backed semantic reranking while retaining the
   lexical reranker as the default.
 - Added trace-dashboard KPIs, quality-state columns, and attention highlighting
