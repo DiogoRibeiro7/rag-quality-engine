@@ -6,7 +6,7 @@ known issues and bugs, milestones, planned features, and near-term priorities.
 
 ## Current state
 
-The repository includes a working local MVP with:
+The repository includes a mature evaluation-first MVP with:
 
 - typed domain models for documents, chunks, retrieval results, generated answers, evaluations, and traces
 - reusable ingestion for text, markdown, csv, and optional pdf adapters
@@ -96,15 +96,20 @@ The repository includes a working local MVP with:
 - Modernized the API container, added a health endpoint, and documented local
   and public-demo deployment workflows.
 
-## Known issues and bugs
+## Known issues and design constraints
 
-These are confirmed defects with concrete reproduction paths. They should be
-fixed before the behaviours they affect are relied on.
+There are no confirmed open defects tracked at the time of this roadmap refresh.
+The main remaining constraints are architectural rather than correctness bugs:
 
-- **Lexical judges remain the deterministic defaults.** `OverlapJudge` and
-  `LexicalClaimSupportJudge` remain useful offline baselines, while opt-in
-  embedding-backed and provider-backed LLM relevance/claim-support judges are
-  available behind the same protocols.
+- **Lexical evaluation remains the deterministic default.** Embedding-backed and
+  provider-backed LLM judges are available, but the default remains lexical so
+  the repository works offline and CI remains deterministic.
+- **Storage is local-first.** Chunks, vector indexes, traces, benchmark artifacts,
+  and approved baselines are filesystem-backed. This is appropriate for a
+  portfolio/demo service but not for multi-replica production deployment.
+- **Public deployment controls are intentionally minimal.** The API has request
+  limits and health checks, but authentication, rate limiting, and production
+  telemetry are still deployment-level extensions.
 
 ## Milestone 1 — Complete the evaluation pipeline
 
@@ -149,33 +154,39 @@ fixed before the behaviours they affect are relied on.
 
 ## Planned features
 
-- **Reranking stage.** Completed: retrieve-then-rerank supports both the
-  deterministic lexical reranker and an embedding-backed semantic reranker behind
-  the same `Reranker` protocol.
-- **Reciprocal Rank Fusion.** Completed: `HybridRetriever` now supports RRF as
-  an alternative to weighted score fusion, removing the need to calibrate raw
-  lexical and vector score scales.
-- **Token- and sentence-aware chunking.** Completed: sentence-aware and
-  token-aware chunking are implemented with exact source offsets; character
-  chunking remains the backwards-compatible default.
-- **Semantic evaluation judges.** Completed: embedding-backed and provider-backed
-  LLM relevance/claim-support judges are available behind the existing
-  evaluation protocols, with deterministic lexical judges retained as the
-  offline default.
-- **Cost and latency budgets.** Completed: benchmark cases now record latency
-  and token estimates, summaries report p95 values, and optional p95 budgets can
-  participate in CI pass/fail alongside quality thresholds.
-- **Golden-set tooling.** Completed: answerable fixtures can carry stable
-  `evidence_phrases`, and the `golden-rebuild` command resolves them against
-  the current corpus/chunker to regenerate relevant chunk ids deterministically.
-- **Dataset versioning.** Completed: benchmark artifacts now record corpus and
-  fixture SHA-256 hashes, chunking configuration, and a combined reproducibility
-  fingerprint so runs can be compared against a stable data identity.
+The originally planned MVP capabilities are now complete: reranking, RRF,
+sentence/token-aware chunking, semantic and LLM evaluation judges, cost/latency
+budgets, golden-set rebuilding, dataset/version provenance, benchmark comparison,
+baseline promotion/validation, dashboard inspection, persistent local retrieval,
+and deployment guidance.
+
+The next phase is post-MVP hardening and longitudinal evaluation:
+
+- **Approved benchmark baseline activation.** Promote the first reviewed
+  baseline so the optional CI comparison gate becomes active on every pull
+  request.
+- **Benchmark history and trend reporting.** Persist comparable benchmark
+  summaries across releases and render metric trends instead of only pairwise
+  diffs.
+- **Pluggable storage.** Introduce storage abstractions for traces, chunks,
+  indexes, and benchmark metadata so local JSON/JSONL remains the default but
+  production backends can be substituted.
+- **Operational observability.** Add structured logging, request/trace correlation,
+  and exportable metrics for latency, token usage, refusals, retrieval quality,
+  and evaluation failures.
+- **Public API controls.** Add optional authentication and rate limiting for
+  internet-facing deployments while preserving the zero-config local demo path.
+- **Release 0.3.0.** Consolidate the post-MVP architecture, changelog, baseline,
+  and deployment contract into the next tagged release.
 
 ## Near-term priorities
 
-1. Finish CI-backed evaluation regression checks and artifact publishing, and
-   run the notebooks under `nbval` in CI.
-2. Harden API safety limits and runtime configuration.
-3. Add persistent retrieval storage instead of relying on in-memory indexing.
-4. Add stronger faithfulness checks with claim extraction and evidence matching.
+1. Promote and commit the first reviewed benchmark baseline so CI regression
+   comparison becomes active rather than optional.
+2. Add benchmark-history storage and release-to-release trend reporting.
+3. Add structured observability and trace/request correlation for public demos.
+4. Introduce pluggable storage interfaces while keeping filesystem-backed local
+   implementations as the default.
+5. Add optional authentication and rate limiting for public API deployments.
+6. Prepare the 0.3.0 release with an updated changelog, baseline snapshot, and
+   deployment contract.
