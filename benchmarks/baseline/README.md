@@ -1,13 +1,30 @@
 # Benchmark Baseline
 
-This directory is the conventional location for an approved benchmark baseline.
+This directory contains the approved benchmark baseline used by CI regression
+comparison.
 
-The CI regression gate is intentionally optional:
+## Current approved baseline
 
-- if both `benchmark-summary.json` and `cases.json` are present here, CI compares
-  the current RAG evaluation against them;
-- if either file is absent, the comparison step is skipped and CI behaves as it
-  did before baseline support was added.
+The first reviewed baseline was promoted from the `rag-evaluation` artifact
+produced by successful `main` CI for commit
+`ad0934fa5f3092cf53b85c3dbd64ad27af530964`.
+
+- cases: 19 total, 16 answerable, 3 unanswerable
+- Recall@k: 0.875
+- MRR: 0.6875
+- faithfulness: 1.0
+- citation support: 1.0
+- refusal accuracy: 1.0
+- p95 latency: 0.5943789999918181 ms
+- p95 token estimate: 132
+- evaluation strategy: lexical
+- evaluation provider: builtin
+- evaluation model: lexical-default
+- fingerprint:
+  `0bf436c0bfc927288cebe24a83894c6e3e96bf81e5225733315da0baa051597b`
+
+Because `benchmark-summary.json`, `cases.json`, and `manifest.json` are now
+committed, the CI baseline regression gate is active on pull requests.
 
 ## Creating or Updating the Baseline
 
