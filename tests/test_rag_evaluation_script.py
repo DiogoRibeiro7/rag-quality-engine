@@ -703,3 +703,53 @@ def test_benchmark_records_embedding_evaluation_strategy(tmp_path: Path) -> None
     )
 
     assert summary.provenance.evaluation_strategy == "embedding"
+
+
+def test_benchmark_provenance_changes_with_evaluation_provider() -> None:
+    first = evaluate_rag.build_benchmark_provenance(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        chunk_size=400,
+        overlap=60,
+        evaluation_strategy="embedding",
+        evaluation_provider="fake",
+        evaluation_model="fake-bow",
+    )
+    second = evaluate_rag.build_benchmark_provenance(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        chunk_size=400,
+        overlap=60,
+        evaluation_strategy="embedding",
+        evaluation_provider="sentence-transformers",
+        evaluation_model="fake-bow",
+    )
+
+    assert first.fingerprint != second.fingerprint
+
+
+def test_benchmark_provenance_changes_with_evaluation_model() -> None:
+    first = evaluate_rag.build_benchmark_provenance(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        chunk_size=400,
+        overlap=60,
+        evaluation_strategy="embedding",
+        evaluation_provider="sentence-transformers",
+        evaluation_model="all-MiniLM-L6-v2",
+    )
+    second = evaluate_rag.build_benchmark_provenance(
+        source_dir=Path("data/sample_documents"),
+        golden_path=Path("data/golden/qa.json"),
+        refusal_path=Path("data/golden/refusal.json"),
+        chunk_size=400,
+        overlap=60,
+        evaluation_strategy="embedding",
+        evaluation_provider="sentence-transformers",
+        evaluation_model="bge-small-en-v1.5",
+    )
+
+    assert first.fingerprint != second.fingerprint
