@@ -384,14 +384,20 @@ def benchmark(
     strategy = evaluation_strategy or settings.evaluation.strategy
     benchmark_embedding_client: EmbeddingClient | None = None
     benchmark_llm_client: LLMClient | None = None
+    evaluation_provider = "builtin"
+    evaluation_model = "lexical-default"
     if strategy == "embedding":
         try:
             benchmark_embedding_client = build_embedding_client(settings.embeddings)
+            evaluation_provider = settings.embeddings.provider
+            evaluation_model = settings.embeddings.model
         except (RuntimeError, ValueError) as exc:
             _fail(str(exc))
     elif strategy == "llm":
         try:
             benchmark_llm_client, _ = build_llm_client(settings.llm)
+            evaluation_provider = settings.llm.provider
+            evaluation_model = settings.llm.model
         except (RuntimeError, ValueError) as exc:
             _fail(str(exc))
     try:
@@ -410,6 +416,8 @@ def benchmark(
             max_p95_latency_ms=max_p95_latency_ms,
             max_p95_token_estimate=max_p95_token_estimate,
             evaluation_strategy=strategy,
+            evaluation_provider=evaluation_provider,
+            evaluation_model=evaluation_model,
             embedding_client=benchmark_embedding_client,
             llm_client=benchmark_llm_client,
         )
@@ -422,6 +430,8 @@ def benchmark(
     table.add_column("Value")
     table.add_row("Runs", str(summary.run_count))
     table.add_row("Evaluation strategy", summary.provenance.evaluation_strategy)
+    table.add_row("Evaluation provider", summary.provenance.evaluation_provider)
+    table.add_row("Evaluation model", summary.provenance.evaluation_model)
     table.add_row("Cases per run", str(summary.case_count))
     table.add_row("Recall@k", f"{summary.average_recall_at_k:.2f}")
     table.add_row("MRR", f"{summary.mean_reciprocal_rank:.2f}")

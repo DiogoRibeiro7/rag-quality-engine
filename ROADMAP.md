@@ -87,6 +87,8 @@ The repository includes a working local MVP with:
   normal CLI/API execution paths.
 - Added evaluation strategy to benchmark provenance so judge changes cannot be
   mistaken for like-for-like regressions.
+- Added evaluation provider and model identity to benchmark provenance so
+  provider/model changes also invalidate like-for-like comparisons.
 - Added configurable embedding-backed semantic reranking while retaining the
   lexical reranker as the default.
 - Added trace-dashboard KPIs, quality-state columns, and attention highlighting
