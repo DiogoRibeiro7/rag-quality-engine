@@ -365,6 +365,7 @@ def benchmark(
     min_refusal_accuracy: float = 1.00,
     max_p95_latency_ms: float | None = None,
     max_p95_token_estimate: int | None = None,
+    evaluation_strategy: str | None = None,
 ) -> None:
     """Run a dataset benchmark over a golden QA set."""
     if not source_dir.exists():
@@ -379,6 +380,20 @@ def benchmark(
         _fail("runs must be greater than or equal to 1.")
     if top_k < 1:
         _fail("top_k must be greater than or equal to 1.")
+    settings = RuntimeSettings.from_env()
+    strategy = evaluation_strategy or settings.evaluation.strategy
+    benchmark_embedding_client: EmbeddingClient | None = None
+    benchmark_llm_client: LLMClient | None = None
+    if strategy == "embedding":
+        try:
+            benchmark_embedding_client = build_embedding_client(settings.embeddings)
+        except (RuntimeError, ValueError) as exc:
+            _fail(str(exc))
+    elif strategy == "llm":
+        try:
+            benchmark_llm_client, _ = build_llm_client(settings.llm)
+        except (RuntimeError, ValueError) as exc:
+            _fail(str(exc))
     try:
         summary, benchmark_runs = run_benchmark(
             source_dir=source_dir,
@@ -394,6 +409,9 @@ def benchmark(
             min_refusal_accuracy=min_refusal_accuracy,
             max_p95_latency_ms=max_p95_latency_ms,
             max_p95_token_estimate=max_p95_token_estimate,
+            evaluation_strategy=strategy,
+            embedding_client=benchmark_embedding_client,
+            llm_client=benchmark_llm_client,
         )
     except ValueError as exc:
         _fail(str(exc))
@@ -403,6 +421,7 @@ def benchmark(
     table.add_column("Metric")
     table.add_column("Value")
     table.add_row("Runs", str(summary.run_count))
+    table.add_row("Evaluation strategy", summary.provenance.evaluation_strategy)
     table.add_row("Cases per run", str(summary.case_count))
     table.add_row("Recall@k", f"{summary.average_recall_at_k:.2f}")
     table.add_row("MRR", f"{summary.mean_reciprocal_rank:.2f}")
