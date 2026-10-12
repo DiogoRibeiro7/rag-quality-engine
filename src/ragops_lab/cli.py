@@ -11,6 +11,7 @@ from rich.table import Table
 
 from .config import RuntimeSettings
 from .evaluation import (
+    BenchmarkRegressionTolerances,
     build_evaluation_judges,
     compare_benchmark_summaries,
     evaluate_answer,
@@ -292,6 +293,10 @@ def benchmark_compare(
     baseline_cases: Path | None = None,
     candidate_cases: Path | None = None,
     allow_mismatched_fingerprints: bool = False,
+    quality_drop_tolerance: float = 0.0,
+    latency_absolute_tolerance_ms: float = 1.0,
+    latency_relative_tolerance: float = 0.25,
+    token_increase_tolerance: int = 0,
 ) -> None:
     """Compare two persisted benchmark summaries."""
     try:
@@ -303,6 +308,12 @@ def benchmark_compare(
         loaded_candidate_cases = (
             load_evaluation_cases(candidate_cases) if candidate_cases is not None else None
         )
+        tolerances = BenchmarkRegressionTolerances(
+            quality_drop=quality_drop_tolerance,
+            latency_absolute_ms=latency_absolute_tolerance_ms,
+            latency_relative=latency_relative_tolerance,
+            token_increase=token_increase_tolerance,
+        )
         comparison = compare_benchmark_summaries(
             baseline=baseline_summary,
             candidate=candidate_summary,
@@ -311,6 +322,7 @@ def benchmark_compare(
             allow_mismatched_fingerprints=allow_mismatched_fingerprints,
             baseline_cases=loaded_baseline_cases,
             candidate_cases=loaded_candidate_cases,
+            tolerances=tolerances,
         )
     except ValueError as exc:
         _fail(str(exc))
@@ -325,6 +337,13 @@ def benchmark_compare(
     table.add_row("Refusal accuracy", f"{comparison.refusal_accuracy_delta:+.4f}")
     table.add_row("p95 latency ms", f"{comparison.p95_latency_ms_delta:+.4f}")
     table.add_row("p95 token estimate", f"{comparison.p95_token_estimate_delta:+d}")
+    table.add_row(
+        "Latency tolerance",
+        (
+            f"max({comparison.tolerances.latency_absolute_ms:.3f} ms, "
+            f"{comparison.tolerances.latency_relative:.0%})"
+        ),
+    )
     table.add_row(
         "Fingerprint match",
         "yes" if comparison.fingerprint_match else "no",
