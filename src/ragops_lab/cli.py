@@ -295,7 +295,7 @@ def benchmark_compare(
     allow_mismatched_fingerprints: bool = False,
     quality_drop_tolerance: float = 0.0,
     latency_absolute_tolerance_ms: float = 1.0,
-    latency_relative_tolerance: float = 0.25,
+    latency_relative_tolerance: float = 0.10,
     token_increase_tolerance: int = 0,
 ) -> None:
     """Compare two persisted benchmark summaries."""
