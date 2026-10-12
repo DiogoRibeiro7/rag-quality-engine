@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from ragops_lab.config import RuntimeSettings
 from ragops_lab.evaluation.benchmark import (
     BenchmarkBaselineManifest,
     BenchmarkBaselineValidation,
@@ -29,6 +30,8 @@ from ragops_lab.evaluation.benchmark import (
     write_artifacts,
     write_benchmark_artifacts,
 )
+from ragops_lab.generation import LLMClient, build_llm_client
+from ragops_lab.retrieval import EmbeddingClient, build_embedding_client
 
 __all__ = [
     "BenchmarkBaselineManifest",
@@ -71,12 +74,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--min-refusal-accuracy", type=float, default=1.00)
     parser.add_argument("--max-p95-latency-ms", type=float, default=None)
     parser.add_argument("--max-p95-token-estimate", type=int, default=None)
+    parser.add_argument("--evaluation-strategy", type=str, default=None)
     parser.add_argument("--runs", type=int, default=1)
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
+    settings = RuntimeSettings.from_env()
+    strategy = args.evaluation_strategy or settings.evaluation.strategy
+    embedding_client: EmbeddingClient | None = None
+    llm_client: LLMClient | None = None
+    if strategy == "embedding":
+        embedding_client = build_embedding_client(settings.embeddings)
+    elif strategy == "llm":
+        llm_client, _ = build_llm_client(settings.llm)
     summary, runs = run_benchmark(
         source_dir=args.source_dir,
         golden_path=args.golden_path,
@@ -91,6 +103,9 @@ def main() -> int:
         min_refusal_accuracy=args.min_refusal_accuracy,
         max_p95_latency_ms=args.max_p95_latency_ms,
         max_p95_token_estimate=args.max_p95_token_estimate,
+        evaluation_strategy=strategy,
+        embedding_client=embedding_client,
+        llm_client=llm_client,
     )
     write_benchmark_artifacts(summary, runs, args.output_dir)
     print(summary.model_dump_json(indent=2))
