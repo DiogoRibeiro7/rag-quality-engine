@@ -85,10 +85,16 @@ def main() -> int:
     strategy = args.evaluation_strategy or settings.evaluation.strategy
     embedding_client: EmbeddingClient | None = None
     llm_client: LLMClient | None = None
+    evaluation_provider = "builtin"
+    evaluation_model = "lexical-default"
     if strategy == "embedding":
         embedding_client = build_embedding_client(settings.embeddings)
+        evaluation_provider = settings.embeddings.provider
+        evaluation_model = settings.embeddings.model
     elif strategy == "llm":
         llm_client, _ = build_llm_client(settings.llm)
+        evaluation_provider = settings.llm.provider
+        evaluation_model = settings.llm.model
     summary, runs = run_benchmark(
         source_dir=args.source_dir,
         golden_path=args.golden_path,
@@ -104,6 +110,8 @@ def main() -> int:
         max_p95_latency_ms=args.max_p95_latency_ms,
         max_p95_token_estimate=args.max_p95_token_estimate,
         evaluation_strategy=strategy,
+        evaluation_provider=evaluation_provider,
+        evaluation_model=evaluation_model,
         embedding_client=embedding_client,
         llm_client=llm_client,
     )
