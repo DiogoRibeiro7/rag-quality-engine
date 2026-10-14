@@ -167,9 +167,9 @@ The next phase is post-MVP hardening and longitudinal evaluation:
 - **Approved benchmark baseline activation.** Completed: the first reviewed
   CI-produced baseline is committed, validated, and active in pull-request
   regression comparison.
-- **Benchmark history and trend reporting.** Persist comparable benchmark
-  summaries across releases and render metric trends instead of only pairwise
-  diffs.
+- **Benchmark history and trend reporting.** Completed: append-only local JSONL
+  history stores reviewed benchmark summaries, and provenance-safe trend
+  reporting summarizes comparable runs over time.
 - **Pluggable storage.** Introduce storage abstractions for traces, chunks,
   indexes, and benchmark metadata so local JSON/JSONL remains the default but
   production backends can be substituted.
@@ -183,10 +183,9 @@ The next phase is post-MVP hardening and longitudinal evaluation:
 
 ## Near-term priorities
 
-1. Add benchmark-history storage and release-to-release trend reporting.
-2. Add structured observability and trace/request correlation for public demos.
-3. Introduce pluggable storage interfaces while keeping filesystem-backed local
+1. Add structured observability and trace/request correlation for public demos.
+2. Introduce pluggable storage interfaces while keeping filesystem-backed local
    implementations as the default.
-4. Add optional authentication and rate limiting for public API deployments.
-5. Prepare the 0.3.0 release with an updated changelog, active baseline, and
-   deployment contract.
+3. Add optional authentication and rate limiting for public API deployments.
+4. Prepare the 0.3.0 release with an updated changelog, active baseline, and
+   benchmark-history snapshot.

@@ -298,6 +298,28 @@ when p95 latency increases by more than max(1 ms, 10% of the baseline). Quality
 and token regressions remain strict by default. All tolerances can be overridden
 through `benchmark-compare` CLI options.
 
+For longitudinal tracking, append reviewed summaries to the local JSONL history:
+
+```bash
+poetry run rag-quality-engine benchmark-history-record \
+  --summary artifacts/evaluation/benchmark-summary.json \
+  --history benchmarks/history/history.jsonl \
+  --label v0.2.0 \
+  --git-commit <commit-sha>
+```
+
+Then inspect comparable history entries:
+
+```bash
+poetry run rag-quality-engine benchmark-history-trend \
+  --history benchmarks/history/history.jsonl \
+  --out artifacts/evaluation/benchmark-trend.md
+```
+
+Trend reporting uses the latest provenance fingerprint by default, so runs with
+different corpus, chunking, judge strategy, provider, or model identities are not
+mixed into the same longitudinal series.
+
 For CI, `make benchmark-baseline-check` first validates the committed summary,
 cases, and manifest with `benchmark-baseline-validate`, then performs the same
 summary + per-query comparison when an approved baseline is present. After reviewing a fresh

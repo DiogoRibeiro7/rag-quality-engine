@@ -26,6 +26,14 @@ from .benchmark import (
     write_benchmark_artifacts,
 )
 from .golden import GoldenSetExample, rebuild_golden_set
+from .history import (
+    BenchmarkHistoryEntry,
+    BenchmarkTrend,
+    append_benchmark_history,
+    build_benchmark_trend,
+    load_benchmark_history,
+    write_benchmark_trend_markdown,
+)
 from .service import (
     ClaimSupportJudge,
     EmbeddingClaimSupportJudge,
@@ -51,6 +59,12 @@ __all__ = [
     "EmbeddingClaimSupportJudge",
     "LLMClaimSupportJudge",
     "GoldenSetExample",
+    "BenchmarkHistoryEntry",
+    "BenchmarkTrend",
+    "append_benchmark_history",
+    "build_benchmark_trend",
+    "load_benchmark_history",
+    "write_benchmark_trend_markdown",
     "rebuild_golden_set",
     "build_evaluation_judges",
     "evaluate_answer",
