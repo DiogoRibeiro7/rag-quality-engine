@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 
 from fastapi.testclient import TestClient
-from pytest import LogCaptureFixture
+from pytest import LogCaptureFixture, MonkeyPatch
 
 from ragops_lab.api.app import TRACE_STORE, app
 from ragops_lab.ingestion import ChunkingConfig, ingest_directory
@@ -127,3 +127,24 @@ def test_api_emits_structured_error_event_for_handled_failure(
     ]
     assert len(error_events) == 1
     assert error_events[0]["status_code"] == 404
+
+
+def test_unexpected_failure_keeps_request_correlation(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    api_module = __import__("ragops_lab.api.app", fromlist=["_search"])
+    request_id = "unexpected-error-123"
+
+    def fail_search(_: object) -> object:
+        raise KeyError("boom")
+
+    monkeypatch.setattr(api_module, "_search", fail_search)
+    response = TestClient(app, raise_server_exceptions=False).post(
+        "/search",
+        headers={"X-Request-ID": request_id},
+        json={"query": "moon", "chunks_path": "unused.jsonl"},
+    )
+
+    assert response.status_code == 500
+    assert response.headers["x-request-id"] == request_id
+    assert response.json()["error"]["code"] == "internal_error"
