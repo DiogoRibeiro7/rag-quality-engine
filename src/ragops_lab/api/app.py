@@ -542,15 +542,17 @@ def dashboard(
     total_tokens = sum(summary.token_estimate for summary in summaries)
 
     rows = "\n".join(
-        "<tr class=\"attention\">"
-        if (
-            (summary.faithfulness is not None and summary.faithfulness < 0.8)
-            or (
-                summary.citation_support is not None
-                and summary.citation_support < 1.0
+        (
+            "<tr class=\"attention\">"
+            if (
+                (summary.faithfulness is not None and summary.faithfulness < 0.8)
+                or (
+                    summary.citation_support is not None
+                    and summary.citation_support < 1.0
+                )
             )
+            else "<tr>"
         )
-        else "<tr>"
         + f'<td><a href="/traces/{escape(summary.trace_id)}">{escape(summary.trace_id)}</a></td>'
         + f"<td>{escape(summary.request_id)}</td>"
         + f"<td>{escape(summary.question)}</td>"
