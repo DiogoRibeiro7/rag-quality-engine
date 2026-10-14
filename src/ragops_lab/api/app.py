@@ -94,6 +94,15 @@ async def observe_and_enforce_request_size(
             status_code=response.status_code,
             latency_ms=latency_ms,
         )
+        if response.status_code >= 400:
+            log_event(
+                "request.error",
+                request_id=request_id,
+                method=request.method,
+                path=request.url.path,
+                status_code=response.status_code,
+                latency_ms=latency_ms,
+            )
         return response
 
     try:
