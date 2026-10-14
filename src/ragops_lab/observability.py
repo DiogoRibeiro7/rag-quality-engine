@@ -6,11 +6,11 @@ import json
 import logging
 import re
 import uuid
-from collections.abc import Mapping
 from typing import Any
 
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
 LOGGER = logging.getLogger("rag_quality_engine.observability")
+LOGGER.setLevel(logging.INFO)
 
 
 def resolve_request_id(candidate: str | None) -> str:
@@ -27,10 +27,3 @@ def log_event(event: str, **fields: Any) -> None:
     payload: dict[str, Any] = {"event": event, **fields}
     LOGGER.info(json.dumps(payload, sort_keys=True, default=str))
 
-
-def event_payload(message: str) -> Mapping[str, Any]:
-    """Parse one structured observability log message."""
-    payload = json.loads(message)
-    if not isinstance(payload, dict):
-        raise ValueError("Structured observability event must be a JSON object.")
-    return payload
