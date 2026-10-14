@@ -46,6 +46,7 @@ class JsonlTraceStore:
                 for summary in summaries
                 if normalized_query in summary.question.lower()
                 or normalized_query in summary.trace_id.lower()
+                or normalized_query in summary.request_id.lower()
                 or normalized_query in summary.model_name.lower()
             ]
         if min_faithfulness is not None:

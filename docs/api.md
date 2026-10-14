@@ -33,6 +33,26 @@ Interactive OpenAPI documentation is available at:
 | `GET` | `/dashboard` | Inspect traces in a browser. |
 | `GET` | `/health` | Return lightweight service health and version metadata. |
 
+## Request Correlation and Structured Logs
+
+Every API request has a correlation identifier.
+
+- Send an optional `X-Request-ID` header containing letters, digits, `.`, `_`,
+  `:`, or `-` (maximum 128 characters).
+- Valid caller IDs are preserved.
+- Missing or invalid IDs are replaced with a generated `req-...` identifier.
+- Every response includes the resolved ID in `X-Request-ID`.
+- `POST /ask` also returns `request_id` in its JSON response and persists it
+  with the trace.
+- `GET /traces?q=...` can search by request ID as well as question, trace ID,
+  or model name.
+
+The service emits one-line JSON log events through the
+`rag_quality_engine.observability` logger. Events include `request.started`,
+`request.completed`, `request.error`, and `trace.created`, with request
+method/path and correlation metadata. This keeps local/demo deployments
+dependency-free while making logs easy to ingest later.
+
 ## Health Check
 
 `GET /health` confirms that the API process is running without requiring data
@@ -189,6 +209,7 @@ Example response:
 
 ```json
 {
+  "request_id": "req-4d2696d4d0d54bccbbd2827c6a80bf85",
   "trace_id": "trace-7f3c2a1b9d42",
   "answer": {
     "question": "Which Apollo mission first landed on the Moon?",
@@ -299,6 +320,7 @@ Example trace summary:
 [
   {
     "trace_id": "trace-7f3c2a1b9d42",
+    "request_id": "req-4d2696d4d0d54bccbbd2827c6a80bf85",
     "question": "Which Apollo mission first landed on the Moon?",
     "model_name": "heuristic-grounded",
     "created_at": "2026-08-06T12:00:01Z",
@@ -329,8 +351,8 @@ http://localhost:8000/dashboard
 The dashboard accepts the same `q`, `min_faithfulness`, and `limit` filters as
 `GET /traces`. It also shows filtered-set KPIs for trace count, average
 faithfulness, average citation support, average latency, and token usage. Trace
-rows include answer relevance, grounded/refusal state, and visual attention
-highlighting for weak faithfulness or citation support.
+rows include request correlation IDs, answer relevance, grounded/refusal state,
+and visual attention highlighting for weak faithfulness or citation support.
 
 ## Error Format
 
@@ -353,6 +375,7 @@ Common API error codes:
 | `invalid_header` | `400` | `Content-Length` is malformed. |
 | `resource_not_found` | `404` | A requested local file, directory, or trace is missing. |
 | `request_too_large` | `413` | The request body exceeds `RAGOPS_API_MAX_REQUEST_BYTES`. |
+| `internal_error` | `500` | An unexpected internal failure occurred. |
 | `provider_error` | `502` | The configured model provider failed at runtime. |
 
 FastAPI's native validation errors may still return its standard `422`

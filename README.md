@@ -365,6 +365,20 @@ chat-completions endpoint and reads the API key from `RAGOPS_LLM_API_KEY_ENV`.
 indexes with the configured local sentence-transformer model; the default
 `fake` provider keeps tests, notebooks, and demos offline and deterministic.
 
+## Request Correlation and Observability
+
+Every API request resolves a request correlation ID. Callers can send
+`X-Request-ID`; valid values are preserved, otherwise the API generates a
+`req-...` ID. Every response returns the resolved ID in the same header.
+`POST /ask` also persists it in the RAG trace and returns it in the JSON
+response, so request logs, API responses, and trace records can be joined
+directly.
+
+The `rag_quality_engine.observability` logger emits one-line JSON events for
+request start/completion/error and trace creation. The implementation uses only
+Python's standard logging module, keeping the local demo zero-dependency while
+leaving the output ready for external log/metrics collectors.
+
 API runtime failures use a stable JSON error envelope:
 
 ```json
