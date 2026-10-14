@@ -16,6 +16,7 @@ class RagTrace(BaseModel):
     """Persisted trace for a retrieval and answer generation request."""
 
     trace_id: str = Field(description="Stable trace identifier.")
+    request_id: str = Field(default="unknown", min_length=1)
     question: str = Field(min_length=1)
     retrieved_chunks: list[RetrievalResult] = Field(default_factory=list)
     answer: GeneratedAnswer
@@ -29,6 +30,14 @@ class RagTrace(BaseModel):
     @classmethod
     def validate_trace_id(cls, value: str) -> str:
         return validate_identifier(value, "trace_id")
+
+    @field_validator("request_id")
+    @classmethod
+    def validate_request_id(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("request_id must not be empty.")
+        return stripped
 
     @field_validator("question", "model_name")
     @classmethod
@@ -48,6 +57,7 @@ class RagTraceSummary(BaseModel):
     """Compact trace representation for list views and dashboards."""
 
     trace_id: str
+    request_id: str
     question: str
     model_name: str
     created_at: datetime
@@ -65,6 +75,7 @@ class RagTraceSummary(BaseModel):
         """Build a compact summary from a full trace."""
         return cls(
             trace_id=trace.trace_id,
+            request_id=trace.request_id,
             question=trace.question,
             model_name=trace.model_name,
             created_at=trace.created_at,
