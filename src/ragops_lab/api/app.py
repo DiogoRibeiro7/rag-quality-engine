@@ -83,7 +83,11 @@ async def observe_and_enforce_request_size(
         path=request.url.path,
     )
 
-    def finalize(response: Response) -> Response:
+    def finalize(
+        response: Response,
+        *,
+        error_type: str | None = None,
+    ) -> Response:
         latency_ms = (perf_counter() - started) * 1000.0
         response.headers["X-Request-ID"] = request_id
         log_event(
@@ -101,6 +105,7 @@ async def observe_and_enforce_request_size(
                 method=request.method,
                 path=request.url.path,
                 status_code=response.status_code,
+                error_type=error_type,
                 latency_ms=latency_ms,
             )
         return response
@@ -143,20 +148,13 @@ async def observe_and_enforce_request_size(
             )
         return finalize(await call_next(request))
     except Exception as exc:
-        log_event(
-            "request.error",
-            request_id=request_id,
-            method=request.method,
-            path=request.url.path,
-            error_type=type(exc).__name__,
-            latency_ms=(perf_counter() - started) * 1000.0,
-        )
         return finalize(
             _error_response(
                 500,
                 "internal_error",
                 "Unexpected internal error.",
-            )
+            ),
+            error_type=type(exc).__name__,
         )
 
 
