@@ -12,9 +12,12 @@ from rich.table import Table
 from .config import RuntimeSettings
 from .evaluation import (
     BenchmarkRegressionTolerances,
+    append_benchmark_history,
+    build_benchmark_trend,
     build_evaluation_judges,
     compare_benchmark_summaries,
     evaluate_answer,
+    load_benchmark_history,
     load_benchmark_summary,
     load_evaluation_cases,
     promote_benchmark_baseline,
@@ -22,6 +25,7 @@ from .evaluation import (
     run_benchmark,
     validate_benchmark_baseline,
     write_benchmark_artifacts,
+    write_benchmark_trend_markdown,
 )
 from .generation import GenerationService, LLMClient, build_llm_client
 from .ingestion import ChunkingConfig, ingest_directory, load_chunks_jsonl
@@ -284,6 +288,68 @@ def benchmark_promote(
             "manifest": str(manifest_out),
         }
     )
+
+
+@app.command("benchmark-history-record")
+def benchmark_history_record(
+    summary: Path = Path("artifacts/evaluation/benchmark-summary.json"),
+    history: Path = Path("benchmarks/history/history.jsonl"),
+    label: str = "local",
+    git_commit: str = "unknown",
+) -> None:
+    """Append one benchmark summary to the local benchmark history."""
+    try:
+        entry = append_benchmark_history(
+            history_path=history,
+            summary_path=summary,
+            label=label,
+            git_commit=git_commit,
+        )
+    except ValueError as exc:
+        _fail(str(exc))
+    console.print(
+        {
+            "history": str(history),
+            "label": entry.label,
+            "git_commit": entry.git_commit,
+            "fingerprint": entry.summary.provenance.fingerprint,
+        }
+    )
+
+
+@app.command("benchmark-history-trend")
+def benchmark_history_trend(
+    history: Path = Path("benchmarks/history/history.jsonl"),
+    fingerprint: str | None = None,
+    out: Path | None = None,
+) -> None:
+    """Summarize metric trends across comparable benchmark-history entries."""
+    try:
+        trend = build_benchmark_trend(
+            load_benchmark_history(history),
+            fingerprint=fingerprint,
+        )
+    except ValueError as exc:
+        _fail(str(exc))
+
+    table = Table(title="Benchmark Trend")
+    table.add_column("Metric")
+    table.add_column("Delta")
+    table.add_row("Entries", str(trend.entry_count))
+    table.add_row("First label", trend.first_label)
+    table.add_row("Latest label", trend.latest_label)
+    table.add_row("Recall@k", f"{trend.recall_at_k_delta:+.4f}")
+    table.add_row("MRR", f"{trend.mean_reciprocal_rank_delta:+.4f}")
+    table.add_row("Faithfulness", f"{trend.faithfulness_delta:+.4f}")
+    table.add_row("Citation support", f"{trend.citation_support_delta:+.4f}")
+    table.add_row("Refusal accuracy", f"{trend.refusal_accuracy_delta:+.4f}")
+    table.add_row("p95 latency ms", f"{trend.p95_latency_ms_delta:+.4f}")
+    table.add_row("p95 token estimate", f"{trend.p95_token_estimate_delta:+d}")
+    console.print(table)
+
+    if out is not None:
+        write_benchmark_trend_markdown(trend, out)
+        console.print({"trend_report": str(out)})
 
 
 @app.command("benchmark-compare")
