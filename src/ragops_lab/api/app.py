@@ -151,7 +151,13 @@ async def observe_and_enforce_request_size(
             error_type=type(exc).__name__,
             latency_ms=(perf_counter() - started) * 1000.0,
         )
-        raise
+        return finalize(
+            _error_response(
+                500,
+                "internal_error",
+                "Unexpected internal error.",
+            )
+        )
 
 
 class IngestRequest(BaseModel):
