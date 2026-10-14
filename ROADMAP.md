@@ -110,8 +110,8 @@ The main remaining constraints are architectural rather than correctness bugs:
   and approved baselines are filesystem-backed. This is appropriate for a
   portfolio/demo service but not for multi-replica production deployment.
 - **Public deployment controls are intentionally minimal.** The API has request
-  limits and health checks, but authentication, rate limiting, and production
-  telemetry are still deployment-level extensions.
+  limits, health checks, correlation IDs, and structured logs, but authentication,
+  rate limiting, and external telemetry export remain deployment-level extensions.
 
 ## Milestone 1 — Complete the evaluation pipeline
 
@@ -173,9 +173,10 @@ The next phase is post-MVP hardening and longitudinal evaluation:
 - **Pluggable storage.** Introduce storage abstractions for traces, chunks,
   indexes, and benchmark metadata so local JSON/JSONL remains the default but
   production backends can be substituted.
-- **Operational observability.** Add structured logging, request/trace correlation,
-  and exportable metrics for latency, token usage, refusals, retrieval quality,
-  and evaluation failures.
+- **Operational observability.** Completed: API requests resolve stable
+  correlation IDs, traces persist request IDs, trace search includes them, and
+  JSON structured lifecycle/trace events expose latency and token metadata
+  without adding a telemetry dependency.
 - **Public API controls.** Add optional authentication and rate limiting for
   internet-facing deployments while preserving the zero-config local demo path.
 - **Release 0.3.0.** Consolidate the post-MVP architecture, changelog, baseline,
@@ -183,9 +184,8 @@ The next phase is post-MVP hardening and longitudinal evaluation:
 
 ## Near-term priorities
 
-1. Add structured observability and trace/request correlation for public demos.
-2. Introduce pluggable storage interfaces while keeping filesystem-backed local
+1. Introduce pluggable storage interfaces while keeping filesystem-backed local
    implementations as the default.
-3. Add optional authentication and rate limiting for public API deployments.
-4. Prepare the 0.3.0 release with an updated changelog, active baseline, and
-   benchmark-history snapshot.
+2. Add optional authentication and rate limiting for public API deployments.
+3. Prepare the 0.3.0 release with an updated changelog, active baseline,
+   benchmark-history snapshot, and observability contract.
