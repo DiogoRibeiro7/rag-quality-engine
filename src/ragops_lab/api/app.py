@@ -18,6 +18,7 @@ from ragops_lab.domain import RagTrace, RetrievalResult
 from ragops_lab.evaluation import build_evaluation_judges, evaluate_answer
 from ragops_lab.generation import GenerationService, LLMClient, build_llm_client
 from ragops_lab.ingestion import ChunkingConfig, ingest_directory, load_chunks_jsonl
+from ragops_lab.observability import log_event, resolve_request_id
 from ragops_lab.retrieval import (
     BM25Retriever,
     EmbeddingClient,
@@ -67,34 +68,81 @@ async def handle_runtime_error(_: Request, exc: RuntimeError) -> JSONResponse:
 
 
 @app.middleware("http")
-async def enforce_request_size(
+async def observe_and_enforce_request_size(
     request: Request,
     call_next: Callable[[Request], Awaitable[Response]],
 ) -> Response:
-    """Reject request bodies above the configured API limit."""
-    content_length = request.headers.get("content-length")
-    if content_length is not None:
-        try:
-            declared_size = int(content_length)
-        except ValueError:
-            return _error_response(400, "invalid_header", "Invalid Content-Length header.")
-        if declared_size > SETTINGS.api_max_request_bytes:
-            return _error_response(
-                413,
-                "request_too_large",
-                (
-                    "Request body is too large. "
-                    f"Maximum size is {SETTINGS.api_max_request_bytes} bytes."
-                ),
-            )
-    body = await request.body()
-    if len(body) > SETTINGS.api_max_request_bytes:
-        return _error_response(
-            413,
-            "request_too_large",
-            (f"Request body is too large. Maximum size is {SETTINGS.api_max_request_bytes} bytes."),
+    """Correlate API requests, emit structured events, and enforce body limits."""
+    request_id = resolve_request_id(request.headers.get("x-request-id"))
+    request.state.request_id = request_id
+    started = perf_counter()
+    log_event(
+        "request.started",
+        request_id=request_id,
+        method=request.method,
+        path=request.url.path,
+    )
+
+    def finalize(response: Response) -> Response:
+        latency_ms = (perf_counter() - started) * 1000.0
+        response.headers["X-Request-ID"] = request_id
+        log_event(
+            "request.completed",
+            request_id=request_id,
+            method=request.method,
+            path=request.url.path,
+            status_code=response.status_code,
+            latency_ms=latency_ms,
         )
-    return await call_next(request)
+        return response
+
+    try:
+        content_length = request.headers.get("content-length")
+        if content_length is not None:
+            try:
+                declared_size = int(content_length)
+            except ValueError:
+                return finalize(
+                    _error_response(
+                        400,
+                        "invalid_header",
+                        "Invalid Content-Length header.",
+                    )
+                )
+            if declared_size > SETTINGS.api_max_request_bytes:
+                return finalize(
+                    _error_response(
+                        413,
+                        "request_too_large",
+                        (
+                            "Request body is too large. "
+                            f"Maximum size is {SETTINGS.api_max_request_bytes} bytes."
+                        ),
+                    )
+                )
+        body = await request.body()
+        if len(body) > SETTINGS.api_max_request_bytes:
+            return finalize(
+                _error_response(
+                    413,
+                    "request_too_large",
+                    (
+                        "Request body is too large. "
+                        f"Maximum size is {SETTINGS.api_max_request_bytes} bytes."
+                    ),
+                )
+            )
+        return finalize(await call_next(request))
+    except Exception as exc:
+        log_event(
+            "request.error",
+            request_id=request_id,
+            method=request.method,
+            path=request.url.path,
+            error_type=type(exc).__name__,
+            latency_ms=(perf_counter() - started) * 1000.0,
+        )
+        raise
 
 
 class IngestRequest(BaseModel):
@@ -331,17 +379,19 @@ def search(request: SearchRequest) -> list[dict[str, object]]:
 
 
 @app.post("/ask")
-def ask(request: AskRequest) -> dict[str, object]:
+def ask(payload: AskRequest, request: Request) -> dict[str, object]:
     """Answer a question using retrieved evidence."""
     started = perf_counter()
-    results = _search(request)
+    request_id = str(request.state.request_id)
+    results = _search(payload)
     llm_client, model_name = build_llm_client(SETTINGS.llm)
     service = GenerationService(llm_client)
-    answer = service.answer(request.query, results, model_name=model_name)
-    evaluation = evaluate_answer(request.query, answer, results)
+    answer = service.answer(payload.query, results, model_name=model_name)
+    evaluation = evaluate_answer(payload.query, answer, results)
     trace = RagTrace(
         trace_id=f"trace-{uuid.uuid4().hex[:12]}",
-        question=request.query,
+        request_id=request_id,
+        question=payload.query,
         retrieved_chunks=results,
         answer=answer,
         evaluation=evaluation,
@@ -350,7 +400,19 @@ def ask(request: AskRequest) -> dict[str, object]:
         token_estimate=sum(result.chunk.token_count for result in results),
     )
     TRACE_STORE.save(trace)
+    log_event(
+        "trace.created",
+        request_id=request_id,
+        trace_id=trace.trace_id,
+        method=request.method,
+        path=request.url.path,
+        model_name=trace.model_name,
+        retrieved_chunk_count=len(results),
+        latency_ms=trace.latency_ms,
+        token_estimate=trace.token_estimate,
+    )
     return {
+        "request_id": request_id,
         "trace_id": trace.trace_id,
         "answer": answer.model_dump(mode="json"),
         "evaluation": evaluation.model_dump(mode="json"),
@@ -481,6 +543,7 @@ def dashboard(
         )
         else "<tr>"
         + f'<td><a href="/traces/{escape(summary.trace_id)}">{escape(summary.trace_id)}</a></td>'
+        + f"<td>{escape(summary.request_id)}</td>"
         + f"<td>{escape(summary.question)}</td>"
         + f"<td>{escape(summary.model_name)}</td>"
         + f"<td>{summary.retrieved_chunk_count}</td>"
@@ -497,7 +560,7 @@ def dashboard(
     )
     query_value = escape(q or "")
     faithfulness_value = "" if min_faithfulness is None else f"{min_faithfulness:.2f}"
-    empty_row = '<tr><td colspan="12">No traces found.</td></tr>'
+    empty_row = '<tr><td colspan="13">No traces found.</td></tr>'
 
     return (
         "<html><head><title>RAG Quality Engine Traces</title>"
@@ -533,7 +596,7 @@ def dashboard(
         f'<label>Limit<input name="limit" value="{limit}" /></label>'
         '<button type="submit">Apply</button>'
         "</form>"
-        "<table><thead><tr><th>Trace</th><th>Question</th><th>Model</th>"
+        "<table><thead><tr><th>Trace</th><th>Request</th><th>Question</th><th>Model</th>"
         "<th>Chunks</th><th>Faithfulness</th><th>Citation</th><th>Relevance</th>"
         "<th>Grounded</th><th>Refusal</th><th>Latency ms</th>"
         "<th>Tokens</th><th>Created</th></tr></thead><tbody>"
