@@ -375,6 +375,7 @@ Common API error codes:
 | `invalid_header` | `400` | `Content-Length` is malformed. |
 | `resource_not_found` | `404` | A requested local file, directory, or trace is missing. |
 | `request_too_large` | `413` | The request body exceeds `RAGOPS_API_MAX_REQUEST_BYTES`. |
+| `internal_error` | `500` | An unexpected internal failure occurred. |
 | `provider_error` | `502` | The configured model provider failed at runtime. |
 
 FastAPI's native validation errors may still return its standard `422`
