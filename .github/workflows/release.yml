@@ -1,0 +1,253 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version without the v prefix (for example 0.3.0)"
+        required: true
+        type: string
+      target_sha:
+        description: "Exact main-branch commit SHA to release"
+        required: true
+        type: string
+      prerelease:
+        description: "Publish as a prerelease"
+        required: true
+        default: false
+        type: boolean
+      dry_run:
+        description: "Validate and build without creating or changing a tag/release"
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  actions: read
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+      TARGET_SHA: ${{ inputs.target_sha }}
+      TAG: v${{ inputs.version }}
+      DRY_RUN: ${{ inputs.dry_run }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Validate requested release target
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid release version: $VERSION" >&2
+            exit 1
+          fi
+          if [[ ! "$TARGET_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "target_sha must be a full 40-character lowercase commit SHA" >&2
+            exit 1
+          fi
+
+          MAIN_SHA="$(gh api repos/${GITHUB_REPOSITORY}/git/ref/heads/main --jq '.object.sha')"
+          if [[ "$TARGET_SHA" != "$MAIN_SHA" ]]; then
+            echo "Refusing to release $TARGET_SHA because current main is $MAIN_SHA" >&2
+            exit 1
+          fi
+
+          SUCCESSFUL_PUSH_CI="$(
+            gh api "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${TARGET_SHA}&event=push&status=success&per_page=100" \
+              --jq '[.workflow_runs[] | select(.name == "CI" and .head_branch == "main" and .conclusion == "success")] | length'
+          )"
+          if [[ "$SUCCESSFUL_PUSH_CI" -lt 1 ]]; then
+            echo "No successful push CI found for main at $TARGET_SHA" >&2
+            exit 1
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.target_sha }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: python -m pip install --disable-pip-version-check "poetry==2.4.3"
+
+      - name: Verify release metadata agreement
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - "$VERSION" <<'PY'
+          from __future__ import annotations
+
+          import json
+          import re
+          import sys
+          import tomllib
+          from pathlib import Path
+
+          version = sys.argv[1]
+
+          with Path("pyproject.toml").open("rb") as handle:
+              pyproject = tomllib.load(handle)
+          assert pyproject["project"]["version"] == version
+
+          package = Path("src/ragops_lab/__init__.py").read_text(encoding="utf-8")
+          assert f'__version__ = "{version}"' in package
+
+          citation = Path("CITATION.cff").read_text(encoding="utf-8")
+          assert re.search(
+              rf'^version:\s*["\']?{re.escape(version)}["\']?\s*$',
+              citation,
+              re.MULTILINE,
+          )
+          assert re.search(r"^cff-version:\s*1\.2\.0\s*$", citation, re.MULTILINE)
+
+          zenodo = json.loads(Path(".zenodo.json").read_text(encoding="utf-8"))
+          assert zenodo["version"] == version
+          assert zenodo["upload_type"] == "software"
+
+          changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
+          assert re.search(
+              rf"^##\s+\[{re.escape(version)}\](?:\s|$)",
+              changelog,
+              re.MULTILINE,
+          )
+          PY
+          poetry check --lock
+
+      - name: Build and smoke-test distributions
+        shell: bash
+        run: |
+          set -euo pipefail
+          poetry build
+          test -n "$(find dist -maxdepth 1 -name '*.whl' -print -quit)"
+          test -n "$(find dist -maxdepth 1 -name '*.tar.gz' -print -quit)"
+
+          python -m venv /tmp/rag-quality-engine-release-smoke
+          /tmp/rag-quality-engine-release-smoke/bin/python -m pip install \
+            --disable-pip-version-check dist/*.whl
+
+          (
+            cd /tmp
+            /tmp/rag-quality-engine-release-smoke/bin/python - "$VERSION" <<'PY'
+            import sys
+            import ragops_lab
+
+            assert ragops_lab.__version__ == sys.argv[1]
+            PY
+            /tmp/rag-quality-engine-release-smoke/bin/rag-quality-engine --help > /dev/null
+          )
+
+          (
+            cd dist
+            sha256sum * > ../SHA256SUMS
+          )
+
+      - name: Create or verify annotated tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            EXISTING_SHA="$(git rev-list -n 1 "$TAG")"
+            if [[ "$EXISTING_SHA" != "$TARGET_SHA" ]]; then
+              echo "$TAG already exists at $EXISTING_SHA, refusing to move it" >&2
+              exit 1
+            fi
+            echo "$TAG already points to the requested commit"
+          elif [[ "$DRY_RUN" == "true" ]]; then
+            echo "Dry run: $TAG does not exist and would be created at $TARGET_SHA"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" "$TARGET_SHA" -m "rag-quality-engine $TAG"
+            git push origin "refs/tags/$TAG"
+          fi
+
+      - name: Publish or repair GitHub Release
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$DRY_RUN" == "true" ]]; then
+            if gh release view "$TAG" >/dev/null 2>&1; then
+              echo "Dry run: GitHub Release $TAG exists and its managed assets would be replaced"
+            else
+              echo "Dry run: GitHub Release $TAG would be created"
+            fi
+            exit 0
+          fi
+
+          PRERELEASE_FLAG=()
+          if [[ "${{ inputs.prerelease }}" == "true" ]]; then
+            PRERELEASE_FLAG+=(--prerelease)
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            EXISTING_PRERELEASE="$(gh release view "$TAG" --json isPrerelease --jq '.isPrerelease')"
+            if [[ "$EXISTING_PRERELEASE" != "${{ inputs.prerelease }}" ]]; then
+              echo "Existing release prerelease state does not match requested state" >&2
+              exit 1
+            fi
+            echo "GitHub Release $TAG exists; replacing managed assets from this verified build"
+            gh release upload "$TAG" dist/* SHA256SUMS --clobber
+          else
+            gh release create "$TAG" \
+              dist/* SHA256SUMS \
+              --title "$TAG" \
+              --generate-notes \
+              --verify-tag \
+              "${PRERELEASE_FLAG[@]}"
+          fi
+
+      - name: Verify published release assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$DRY_RUN" == "true" ]]; then
+            echo "Dry run: skipping published-asset verification because no release was changed"
+            exit 0
+          fi
+
+          rm -rf /tmp/release-assets
+          mkdir -p /tmp/release-assets
+          gh release download "$TAG" \
+            --pattern '*.whl' \
+            --pattern '*.tar.gz' \
+            --pattern 'SHA256SUMS' \
+            --dir /tmp/release-assets
+
+          for source in dist/*; do
+            name="$(basename "$source")"
+            test -f "/tmp/release-assets/$name"
+            test "$(sha256sum "$source" | cut -d' ' -f1)" = \
+              "$(sha256sum "/tmp/release-assets/$name" | cut -d' ' -f1)"
+          done
+
+          test -f /tmp/release-assets/SHA256SUMS
+          test "$(sha256sum SHA256SUMS | cut -d' ' -f1)" = \
+            "$(sha256sum /tmp/release-assets/SHA256SUMS | cut -d' ' -f1)"
+          (
+            cd /tmp/release-assets
+            sha256sum -c SHA256SUMS
+          )
+
+      - name: Summarize release run
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$DRY_RUN" == "true" ]]; then
+            printf '### Release dry run passed\n\n`%s` at `%s` was validated and built without tag or release mutation.\n' \
+              "$TAG" "$TARGET_SHA" >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf '### Release published\n\n`%s` at `%s` passed release verification.\n' \
+              "$TAG" "$TARGET_SHA" >> "$GITHUB_STEP_SUMMARY"
+          fi
