@@ -179,13 +179,13 @@ The next phase is post-MVP hardening and longitudinal evaluation:
   without adding a telemetry dependency.
 - **Public API controls.** Add optional authentication and rate limiting for
   internet-facing deployments while preserving the zero-config local demo path.
-- **Release 0.3.0.** Consolidate the post-MVP architecture, changelog, baseline,
-  and deployment contract into the next tagged release.
+- **Release 0.3.0.** Release preparation completed: post-MVP architecture,
+  changelog, approved baseline/history evidence, observability, deployment, and
+  dependency-maintenance contracts are consolidated for tagging.
 
 ## Near-term priorities
 
 1. Introduce pluggable storage interfaces while keeping filesystem-backed local
    implementations as the default.
 2. Add optional authentication and rate limiting for public API deployments.
-3. Prepare the 0.3.0 release with an updated changelog, active baseline,
-   benchmark-history snapshot, and observability contract.
+3. Publish the prepared 0.3.0 release after the release-candidate CI passes.

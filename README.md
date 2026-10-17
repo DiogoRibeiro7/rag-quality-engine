@@ -23,6 +23,7 @@ This project is built to demonstrate practical AI engineering, not just prompt w
 - Licensed under MIT.
 - All versions DOI: [`10.5281/zenodo.21805398`](https://doi.org/10.5281/zenodo.21805398).
 - Release history is tracked in [`CHANGELOG.md`](CHANGELOG.md).
+- v0.3.0 release validation is documented in [`RELEASE_VALIDATION_0.3.0.md`](RELEASE_VALIDATION_0.3.0.md).
 
 ## What it does
 

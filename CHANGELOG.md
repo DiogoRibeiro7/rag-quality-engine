@@ -7,18 +7,45 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-17
+
 ### Added
 
 - Added refusal benchmark fixtures and refusal-accuracy reporting for
   unanswerable and weak-context evaluation cases.
+- Added benchmark provenance fingerprints covering corpus bytes, evaluation
+  fixtures, chunking configuration, evaluation strategy, provider, and model.
+- Added benchmark comparison tooling with provenance checks, regression
+  classification, and per-query comparison.
+- Added approved benchmark baseline promotion, manifest metadata, and baseline
+  integrity validation before CI comparisons.
+- Added append-only benchmark history and provenance-safe trend reporting.
+- Added optional p95 latency and token-budget regression gates.
+- Added golden-set rebuilding from stable evidence phrases.
+- Added sentence-aware and token-aware chunking with exact source offsets.
+- Added configurable lexical, embedding-backed, and provider-backed LLM
+  evaluation strategies.
+- Added configurable embedding-backed semantic reranking.
+- Added richer trace-dashboard KPIs, quality-state columns, and weak-trace
+  highlighting.
+- Added API health checks and expanded deployment guidance.
+- Added request correlation IDs, structured lifecycle events, and trace-linked
+  observability without adding a telemetry dependency.
 - Added a dedicated API usage guide with endpoint summaries, request payloads,
   response examples, trace inspection examples, runtime settings, and error
   formats.
+- Added complete Dependabot coverage for Python, GitHub Actions, Docker, Docker
+  Compose, and pre-commit plus shared Safe Dependabot validation.
 
 ### Changed
 
 - Improved the deterministic heuristic generator to parse multi-line contexts
   and refuse answers when retrieved evidence has insufficient query overlap.
+- Expanded CI support to Python 3.11, 3.12, 3.13, and 3.14.
+- Modernized first-party GitHub Actions to current Node 24-compatible majors.
+- Consolidated the post-MVP benchmark, observability, deployment, and
+  dependency-maintenance contract for the 0.3.0 release.
+- Bumped package, module, Zenodo, and citation metadata versions to `0.3.0`.
 
 ## [0.2.0] - 2026-08-06
 
@@ -118,7 +145,8 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 - Updated `GitPython` to a patched version to clear Dependabot advisories.
 - Fixed GitHub Actions and branch protection check naming for the Python matrix.
 
-[Unreleased]: https://github.com/DiogoRibeiro7/rag-quality-engine/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/DiogoRibeiro7/rag-quality-engine/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/DiogoRibeiro7/rag-quality-engine/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/DiogoRibeiro7/rag-quality-engine/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/DiogoRibeiro7/rag-quality-engine/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/DiogoRibeiro7/rag-quality-engine/compare/v0.1.2...v0.1.3
