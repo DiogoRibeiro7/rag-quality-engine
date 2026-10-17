@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from ragops_lab import __version__
 from ragops_lab.retrieval import FakeEmbeddingClient
 
 SCRIPT_PATH = Path("scripts/evaluate_rag.py")
@@ -496,7 +497,7 @@ def test_promote_benchmark_baseline_writes_validated_artifacts(tmp_path: Path) -
     assert evaluate_rag.load_benchmark_summary(summary_out).passed is True
     assert len(evaluate_rag.load_evaluation_cases(cases_out)) == summary.case_count
     manifest = evaluate_rag.load_benchmark_baseline_manifest(manifest_out)
-    assert manifest.project_version == "0.2.0"
+    assert manifest.project_version == __version__
     assert manifest.git_commit == "abc123"
     assert manifest.benchmark_fingerprint == summary.provenance.fingerprint
 
