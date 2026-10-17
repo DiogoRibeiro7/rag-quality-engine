@@ -1,6 +1,6 @@
 [project]
 name = "rag-quality-engine"
-version = "0.2.0"
+version = "0.3.0"
 description = "RAG Quality Engine is an open-source software project for building, testing, and observing retrieval-augmented generation systems."
 authors = [{ name = "Diogo Ribeiro", email = "hansolo.dj@gmail.com" }]
 readme = "README.md"
